@@ -15,8 +15,9 @@ const Dropdown = ({ menuItem, stickyMenu }) => {
     >
       <a
         href="#"
+        onClick={(event) => event.preventDefault()}
         className={`hover:text-blue text-custom-sm font-medium text-dark flex items-center gap-1.5 capitalize ${
-          stickyMenu ? "xl:py-4" : "xl:py-6"
+          stickyMenu ? "lg:py-4" : "lg:py-6"
         } ${pathUrl.includes(menuItem.title) && "!text-blue"}`}
       >
         {menuItem.title}
@@ -41,8 +42,8 @@ const Dropdown = ({ menuItem, stickyMenu }) => {
       <ul
         className={`dropdown ${dropdownToggler && "flex"} ${
           stickyMenu
-            ? "xl:group-hover:translate-y-0"
-            : "xl:group-hover:translate-y-0"
+            ? "lg:group-hover:translate-y-0"
+            : "lg:group-hover:translate-y-0"
         }`}
       >
         {menuItem.submenu.map((item, i) => (

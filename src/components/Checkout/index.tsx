@@ -7,8 +7,14 @@ import ShippingMethod from "./ShippingMethod";
 import PaymentMethod from "./PaymentMethod";
 import Coupon from "./Coupon";
 import Billing from "./Billing";
+import { selectTotalPrice } from "@/redux/features/cart-slice";
+import { useAppSelector } from "@/redux/store";
+import { useSelector } from "react-redux";
 
 const Checkout = () => {
+  const cartItems = useAppSelector((state) => state.cartReducer.items);
+  const totalPrice = useSelector(selectTotalPrice);
+
   return (
     <>
       <Breadcrumb title={"Checkout"} pages={["checkout"]} />
@@ -68,45 +74,40 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    {/* <!-- product item --> */}
-                    <div className="flex items-center justify-between py-5 border-b border-gray-3">
-                      <div>
-                        <p className="text-dark">iPhone 14 Plus , 6/128GB</p>
-                      </div>
-                      <div>
-                        <p className="text-dark text-right">$899.00</p>
-                      </div>
-                    </div>
+                    {cartItems.length > 0 ? (
+                      <>
+                        {cartItems.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between gap-5 py-5 border-b border-gray-3"
+                          >
+                            <div>
+                              <p className="text-dark">
+                                {item.title} x {item.quantity}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-dark text-right">
+                                ${item.discountedPrice * item.quantity}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
 
-                    {/* <!-- product item --> */}
-                    <div className="flex items-center justify-between py-5 border-b border-gray-3">
-                      <div>
-                        <p className="text-dark">Asus RT Dual Band Router</p>
-                      </div>
-                      <div>
-                        <p className="text-dark text-right">$129.00</p>
-                      </div>
-                    </div>
-
-                    {/* <!-- product item --> */}
-                    <div className="flex items-center justify-between py-5 border-b border-gray-3">
-                      <div>
-                        <p className="text-dark">Havit HV-G69 USB Gamepad</p>
-                      </div>
-                      <div>
-                        <p className="text-dark text-right">$29.00</p>
-                      </div>
-                    </div>
-
-                    {/* <!-- product item --> */}
-                    <div className="flex items-center justify-between py-5 border-b border-gray-3">
-                      <div>
-                        <p className="text-dark">Shipping Fee</p>
-                      </div>
-                      <div>
-                        <p className="text-dark text-right">$15.00</p>
-                      </div>
-                    </div>
+                        <div className="flex items-center justify-between py-5 border-b border-gray-3">
+                          <div>
+                            <p className="text-dark">Shipping Fee</p>
+                          </div>
+                          <div>
+                            <p className="text-dark text-right">$15.00</p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <p className="py-8 text-center text-dark-4">
+                        Your cart is empty.
+                      </p>
+                    )}
 
                     {/* <!-- total --> */}
                     <div className="flex items-center justify-between pt-5">
@@ -115,7 +116,7 @@ const Checkout = () => {
                       </div>
                       <div>
                         <p className="font-medium text-lg text-dark text-right">
-                          $1072.00
+                          ${cartItems.length > 0 ? totalPrice + 15 : 0}
                         </p>
                       </div>
                     </div>

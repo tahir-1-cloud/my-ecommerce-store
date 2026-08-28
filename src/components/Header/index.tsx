@@ -56,12 +56,12 @@ const Header = () => {
       <div className="max-w-[1170px] mx-auto px-4 sm:px-7.5 xl:px-0">
         {/* <!-- header top start --> */}
         <div
-          className={`flex flex-col lg:flex-row gap-5 items-end lg:items-center xl:justify-between ease-out duration-200 ${
+          className={`flex flex-col lg:flex-row gap-5 items-end lg:items-center lg:justify-between ease-out duration-200 ${
             stickyMenu ? "py-4" : "py-6"
           }`}
         >
           {/* <!-- header top left --> */}
-          <div className="xl:w-auto flex-col sm:flex-row w-full flex sm:justify-between sm:items-center gap-5 sm:gap-10">
+          <div className="lg:w-auto flex-col sm:flex-row w-full flex sm:justify-between sm:items-center gap-5 sm:gap-10">
             <Link className="flex-shrink-0" href="/">
               <Image
                 src="/images/logo/logo.svg"
@@ -246,7 +246,7 @@ const Header = () => {
               <button
                 id="Toggle"
                 aria-label="Toggler"
-                className="xl:hidden block"
+                className="lg:hidden block"
                 onClick={() => setNavigationOpen(!navigationOpen)}
               >
                 <span className="block relative cursor-pointer w-5.5 h-5.5">
@@ -294,14 +294,14 @@ const Header = () => {
           <div className="flex items-center justify-between">
             {/* <!--=== Main Nav Start ===--> */}
             <div
-              className={`w-[288px] absolute right-4 top-full xl:static xl:w-auto h-0 xl:h-auto invisible xl:visible xl:flex items-center justify-between ${
+              className={`w-[288px] absolute right-4 top-full lg:static lg:w-auto h-0 lg:h-auto invisible lg:visible lg:flex items-center justify-between ${
                 navigationOpen &&
                 `!visible bg-white shadow-lg border border-gray-3 !h-auto max-h-[400px] overflow-y-scroll rounded-md p-5`
               }`}
             >
               {/* <!-- Main Nav Start --> */}
               <nav>
-                <ul className="flex xl:items-center flex-col xl:flex-row gap-5 xl:gap-6">
+                <ul className="flex lg:items-center flex-col lg:flex-row gap-5 lg:gap-6">
                   {menuData.map((menuItem, i) =>
                     menuItem.submenu ? (
                       <Dropdown
@@ -317,7 +317,7 @@ const Header = () => {
                         <Link
                           href={menuItem.path}
                           className={`hover:text-blue text-custom-sm font-medium text-dark flex ${
-                            stickyMenu ? "xl:py-4" : "xl:py-6"
+                            stickyMenu ? "lg:py-4" : "lg:py-6"
                           }`}
                         >
                           {menuItem.title}
@@ -332,7 +332,7 @@ const Header = () => {
             {/* // <!--=== Main Nav End ===--> */}
 
             {/* // <!--=== Nav Right Start ===--> */}
-            <div className="hidden xl:block">
+            <div className="hidden lg:block">
               <ul className="flex items-center gap-5.5">
                 <li className="py-4">
                   <a
