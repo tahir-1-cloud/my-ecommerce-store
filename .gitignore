@@ -33,3 +33,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Visual Studio
+.vs/
+**/.vs/
+
+# .NET build folders
+**/bin/
+**/obj/
+
+# Visual Studio user files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET generated files
+*.dll
+*.pdb
