@@ -70,18 +70,20 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname() ?? "";
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-[#0B1120] font-sans">
-      {/* Soft glow */}
-      <div className="pointer-events-none absolute -top-24 -left-24 h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
+    <div className="relative flex h-full flex-col overflow-hidden bg-gradient-to-b from-[#252268] via-[#1b1953] to-[#12103a] font-sans antialiased">
+      {/* Depth layers (sirf background mein, text ke peeche) */}
+      <div className="pointer-events-none absolute -top-28 -left-24 h-72 w-72 rounded-full bg-indigo-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-24 h-72 w-72 rounded-full bg-violet-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-[#3a3790]" />
 
       {/* Brand */}
-      <div className="relative flex h-[76px] shrink-0 items-center border-b border-white/[0.06] px-5">
+      <div className="relative z-10 flex h-[76px] shrink-0 items-center border-b border-[#34318a] px-5">
         <Link
           href="/admin"
           onClick={onNavigate}
           className="flex items-center gap-3"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-900/40">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#4338ca] bg-[#4f46e5] text-white shadow-[0_6px_14px_-3px_rgba(79,70,229,0.7),inset_0_1px_0_rgba(255,255,255,0.3)]">
             <Box size={20} strokeWidth={2} />
           </div>
 
@@ -89,7 +91,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <h1 className="text-[16px] font-semibold tracking-tight text-white">
               ShopAdmin
             </h1>
-            <p className="mt-1.5 text-[11px] font-medium text-slate-400">
+            <p className="mt-1.5 text-[11px] font-medium text-[#a5b4fc]">
               Ecommerce Panel
             </p>
           </div>
@@ -99,15 +101,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       {/* Navigation */}
       <nav
         aria-label="Admin navigation"
-        className="relative flex-1 overflow-y-auto px-3 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="relative z-10 flex-1 overflow-y-auto px-3 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {sections.map((section) => (
           <div key={section.title} className="mb-6 last:mb-0">
-            <p className="mb-2 px-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            <p className="mb-2 px-3 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-[#8f9cf0]">
               {section.title}
             </p>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActivePath(pathname, item.href);
@@ -118,44 +120,43 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     href={item.href}
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
-                    className={`group relative flex h-11 items-center gap-3 rounded-xl px-2.5 text-[14px] transition-all duration-200 ${
+                    className={`group relative flex h-11 items-center gap-3 rounded-xl border px-2.5 text-[14px] transition-colors duration-150 ${
                       active
-                        ? "bg-indigo-500/[0.14] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] ring-1 ring-inset ring-indigo-400/25"
-                        : "font-medium text-slate-400 hover:bg-white/[0.05] hover:text-slate-100"
+                        ? "border-[#4338ca] bg-[#4f46e5] font-semibold text-white shadow-[0_8px_18px_-6px_rgba(79,70,229,0.75),inset_0_1px_0_rgba(255,255,255,0.25)]"
+                        : "border-transparent font-medium text-[#e0e7ff] hover:border-[#4a47a8] hover:bg-[#312e81] hover:text-white hover:shadow-[0_6px_14px_-6px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.08)]"
                     }`}
                   >
-                    {/* Active indicator */}
-                    <span
-                      className={`absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-indigo-400 transition-all duration-200 ${
-                        active ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
-
                     {/* Icon box */}
                     <span
-                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-200 ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors duration-150 ${
                         active
-                          ? "bg-indigo-500/25 text-indigo-200 ring-1 ring-inset ring-indigo-400/30"
-                          : "bg-white/[0.04] text-slate-400 group-hover:bg-white/[0.08] group-hover:text-slate-200"
+                          ? "bg-[#6366f1] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
+                          : "bg-[#2e2b7a] text-[#c7d2fe] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] group-hover:bg-[#4338ca] group-hover:text-white"
                       }`}
                     >
-                      <Icon size={17} strokeWidth={active ? 2.2 : 1.9} />
+                      <Icon size={17} strokeWidth={active ? 2.2 : 2} />
                     </span>
 
                     <span className="flex-1 truncate">{item.label}</span>
 
                     {item.badge && (
-                      <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[10.5px] font-semibold text-indigo-300">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10.5px] font-semibold ${
+                          active
+                            ? "bg-[#6366f1] text-white"
+                            : "bg-[#3b37a0] text-[#e0e7ff]"
+                        }`}
+                      >
                         {item.badge}
                       </span>
                     )}
 
                     <ChevronRight
                       size={15}
-                      className={`shrink-0 transition-all duration-200 ${
+                      className={`shrink-0 transition-opacity duration-150 ${
                         active
-                          ? "translate-x-0 text-indigo-300 opacity-100"
-                          : "-translate-x-1 text-slate-500 opacity-0 group-hover:translate-x-0 group-hover:opacity-100"
+                          ? "text-white opacity-100"
+                          : "text-[#c7d2fe] opacity-0 group-hover:opacity-100"
                       }`}
                     />
                   </Link>
@@ -167,11 +168,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       {/* View Store */}
-      <div className="relative shrink-0 border-t border-white/[0.06] p-3">
+      <div className="relative z-10 shrink-0 border-t border-[#34318a] p-3">
         <Link
           href="/"
           onClick={onNavigate}
-          className="group flex h-11 items-center justify-center gap-2 rounded-xl bg-white/[0.06] px-3 text-sm font-semibold text-slate-200 ring-1 ring-inset ring-white/10 transition-all duration-200 hover:bg-indigo-500 hover:text-white hover:ring-indigo-400"
+          className="group flex h-11 items-center justify-center gap-2 rounded-xl border border-[#4a47a8] bg-[#312e81] px-3 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.12)] transition-colors duration-150 hover:border-[#4338ca] hover:bg-[#4f46e5] hover:shadow-[0_8px_18px_-6px_rgba(79,70,229,0.75),inset_0_1px_0_rgba(255,255,255,0.25)]"
         >
           <ExternalLink size={16} strokeWidth={2} />
           View Store
@@ -204,7 +205,7 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-white/5 lg:block">
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 shadow-[6px_0_30px_-8px_rgba(30,27,75,0.45)] lg:block">
         <SidebarContent />
       </aside>
 
@@ -215,7 +216,7 @@ export default function AdminSidebar() {
             type="button"
             aria-label="Close sidebar"
             onClick={() => setMobileOpen(false)}
-            className="absolute inset-0 cursor-default bg-slate-950/60 backdrop-blur-sm"
+            className="absolute inset-0 cursor-default bg-slate-950/60"
           />
 
           <aside className="relative h-full w-[280px] shadow-2xl">
@@ -223,7 +224,7 @@ export default function AdminSidebar() {
               type="button"
               onClick={() => setMobileOpen(false)}
               aria-label="Close admin menu"
-              className="absolute right-3 top-[22px] z-10 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+              className="absolute right-3 top-[22px] z-20 flex h-8 w-8 items-center justify-center rounded-lg text-[#c7d2fe] transition-colors hover:bg-[#312e81] hover:text-white"
             >
               <X size={18} strokeWidth={2} />
             </button>
@@ -238,7 +239,7 @@ export default function AdminSidebar() {
         type="button"
         onClick={() => setMobileOpen(true)}
         aria-label="Open admin menu"
-        className="fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-900/40 transition-transform hover:scale-105 lg:hidden"
+        className="fixed bottom-5 right-5 z-30 flex h-12 w-12 items-center justify-center rounded-full border border-[#4338ca] bg-[#4f46e5] text-white shadow-[0_8px_18px_-6px_rgba(79,70,229,0.75),inset_0_1px_0_rgba(255,255,255,0.25)] transition-colors hover:bg-[#4338ca] lg:hidden"
       >
         <Menu size={20} strokeWidth={2} />
       </button>
