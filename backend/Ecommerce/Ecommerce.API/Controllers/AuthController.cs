@@ -21,8 +21,7 @@ namespace Ecommerce.API.Controllers
         // POST: api/auth/register
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<ActionResult<AuthResponse>> Register(
-            [FromBody] RegisterRequest request)
+        public async Task<ActionResult<AuthResponse>> Register([FromBody] RegisterRequest request)
         {
             var response = await _authService.RegisterAsync(request);
 
@@ -32,8 +31,7 @@ namespace Ecommerce.API.Controllers
         // POST: api/auth/login
         [HttpPost("login")]
         [AllowAnonymous]
-        public async Task<ActionResult<AuthResponse>> Login(
-            [FromBody] LoginRequest request)
+        public async Task<ActionResult<AuthResponse>> Login([FromBody] LoginRequest request)
         {
             var response = await _authService.LoginAsync(request);
 
@@ -43,8 +41,7 @@ namespace Ecommerce.API.Controllers
         // POST: api/auth/refresh-token
         [HttpPost("refresh-token")]
         [AllowAnonymous]
-        public async Task<ActionResult<AuthResponse>> RefreshToken(
-            [FromBody] RefreshTokenRequest request)
+        public async Task<ActionResult<AuthResponse>> RefreshToken([FromBody] RefreshTokenRequest request)
         {
             var response = await _authService.RefreshTokenAsync(request);
 
