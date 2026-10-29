@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -14,6 +15,7 @@ interface CategoryFormProps {
     name: string;
     description?: string | null;
     imageUrl?: string | null;
+    isActive?: boolean;
   } | null;
   onSubmit: (data: CategoryRequest) => Promise<void>;
   onCancel: () => void;
@@ -28,6 +30,7 @@ export default function CategoryForm({
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -36,12 +39,15 @@ export default function CategoryForm({
     setDescription(initialData?.description ?? "");
     setImageUrl(initialData?.imageUrl ?? "");
     setImageFile(null);
+    setIsActive(initialData?.isActive ?? true);
     setError("");
   }, [initialData]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     if (submitting) return;
+
     setError("");
 
     const trimmedName = name.trim();
@@ -54,9 +60,8 @@ export default function CategoryForm({
     const payload: CategoryRequest = {
       name: trimmedName,
       description: description.trim() || null,
-      imageUrl: imageFile ? null : imageUrl.trim() || null,
-      imageFile,
-      removeImage: !!initialData?.imageUrl && !imageUrl && !imageFile,
+      image: imageFile,
+      isActive,
     };
 
     try {
@@ -92,7 +97,7 @@ export default function CategoryForm({
             className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
           >
             <AlertCircle size={18} className="mt-0.5 shrink-0" />
-            {error}
+            <span>{error}</span>
           </div>
         )}
 
@@ -134,8 +139,15 @@ export default function CategoryForm({
           disabled={submitting}
         />
 
+  
+
         <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-          <Button variant="secondary" onClick={onCancel} disabled={submitting}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onCancel}
+            disabled={submitting}
+          >
             Cancel
           </Button>
 
