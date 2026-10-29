@@ -1,27 +1,29 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ReactNode } from "react";
+import type { ElementType } from "react";
 import type { ColDef, ICellRendererParams } from "ag-grid-community";
 import {
-  AlertCircle,
+  Archive,
+  CheckCircle2,
   FolderOpen,
+  ImageOff,
   Pencil,
   Plus,
   Trash2,
-  X,
+  ZoomIn,
 } from "lucide-react";
 
 import DataGrid from "../components/common/DataGrid";
 import Button from "@/app/admin/components/ui/Button";
 import IconButton from "../components/ui/IconButton";
+import ImagePreviewModal from "@/app/admin/components/ui/ImagePreviewModal";
 import CategoryForm from "../components/forms/CategoryForm";
+import ConfirmDialog from "@/app/admin/components/ui/ConfirmDialog";
 
-import {
-  categoryService,
-  type Category,
-  type CategoryRequest,
-} from "@/services/categoryService";
+import { notify } from "@/lib/notify";
+import { categoryService } from "@/services/categoryService";
+import type { Category, CategoryRequest } from "@/types/category";
 import { ApiError } from "@/lib/apierror";
 
 const getMessage = (error: unknown, fallback: string) =>
@@ -31,16 +33,65 @@ const getMessage = (error: unknown, fallback: string) =>
       ? error.message
       : fallback;
 
+type StatTone = "indigo" | "emerald" | "slate";
+
+const statTones: Record<StatTone, string> = {
+  indigo: "bg-indigo-50 text-indigo-600 ring-indigo-100",
+  emerald: "bg-emerald-50 text-emerald-600 ring-emerald-100",
+  slate: "bg-slate-100 text-slate-600 ring-slate-200",
+};
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  tone,
+}: {
+  label: string;
+  value: string | number;
+  icon: ElementType;
+  tone: StatTone;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <span
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${statTones[tone]}`}
+      >
+        <Icon size={22} strokeWidth={1.9} />
+      </span>
+
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <p className="mt-0.5 text-2xl font-bold leading-none tracking-tight text-slate-900">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pageError, setPageError] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Category | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [preview, setPreview] = useState<{ src: string; title: string } | null>(
+    null
+  );
+
+  const stats = useMemo(() => {
+    const active = categories.filter((c) => c.isActive).length;
+    return {
+      total: categories.length,
+      active,
+      inactive: categories.length - active,
+    };
+  }, [categories]);
 
   const loadCategories = useCallback(async () => {
     setLoading(true);
-    setPageError("");
 
     try {
       const result = await categoryService.getAll();
@@ -51,7 +102,7 @@ export default function CategoriesPage() {
 
       setCategories(result);
     } catch (error) {
-      setPageError(getMessage(error, "Unable to load categories."));
+      notify.error(getMessage(error, "Unable to load categories."));
     } finally {
       setLoading(false);
     }
@@ -63,13 +114,11 @@ export default function CategoriesPage() {
 
   function openAddForm() {
     setEditing(null);
-    setPageError("");
     setFormOpen(true);
   }
 
   function openEditForm(category: Category) {
     setEditing(category);
-    setPageError("");
     setFormOpen(true);
   }
 
@@ -95,24 +144,32 @@ export default function CategoriesPage() {
       throw new Error(getMessage(error, "Unable to save category."));
     }
 
+    if (editing) {
+      notify.updated("Category updated successfully.");
+    } else {
+      notify.created("Category created successfully.");
+    }
+
     closeForm();
     await loadCategories();
   }
 
-  async function handleDelete(category: Category) {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${category.name}"?`
-    );
+  async function handleDelete() {
+    if (!deleteTarget || deleting) return;
 
-    if (!confirmed) return;
-
-    setPageError("");
+    setDeleting(true);
 
     try {
-      await categoryService.delete(category.id);
+      await categoryService.delete(deleteTarget.id);
+
+      notify.deleted("Category deleted successfully.");
+      setDeleteTarget(null);
+
       await loadCategories();
     } catch (error) {
-      setPageError(getMessage(error, "Unable to delete category."));
+      notify.error(getMessage(error, "Unable to delete category."));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -121,47 +178,24 @@ export default function CategoriesPage() {
       {
         headerName: "ID",
         field: "id",
-        maxWidth: 90,
+        width: 90,
+        minWidth: 80,
+        maxWidth: 100,
+        flex: 0,
         filter: "agNumberColumnFilter",
         cellClass: "font-medium text-slate-500",
       },
       {
-        headerName: "Category",
+        headerName: "Category Name",
         field: "name",
-        minWidth: 220,
-        cellRenderer: (params: ICellRendererParams<Category>) => {
-          const category = params.data;
-          if (!category) return null;
-
-          return (
-            <div className="flex h-full items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-inset ring-indigo-100">
-                <FolderOpen size={17} strokeWidth={1.9} />
-              </div>
-              <span className="truncate font-semibold text-slate-900">
-                {category.name}
-              </span>
-            </div>
-          );
-        },
-      },
-      {
-        headerName: "Slug",
-        field: "slug",
-        minWidth: 160,
-        cellClass: "text-slate-500",
-      },
-      {
-        headerName: "Description",
-        field: "description",
-        minWidth: 220,
-        cellClass: "text-slate-500",
-        valueFormatter: (params) => params.value || "—",
+        minWidth: 200,
+        cellClass: "font-semibold text-slate-900",
       },
       {
         headerName: "Status",
         field: "isActive",
-        maxWidth: 140,
+        width: 140,
+        maxWidth: 150,
         filter: "agTextColumnFilter",
         filterValueGetter: (params) =>
           params.data?.isActive ? "Active" : "Inactive",
@@ -189,14 +223,70 @@ export default function CategoriesPage() {
         },
       },
       {
+        headerName: "Description",
+        field: "description",
+        minWidth: 240,
+        cellClass: "text-slate-500",
+        valueFormatter: (params) => params.value || "—",
+      },
+      {
+        headerName: "Image",
+        field: "imageUrl",
+        width: 110,
+        minWidth: 110,
+        maxWidth: 120,
+        flex: 0,
+        sortable: false,
+        filter: false,
+        cellRenderer: (params: ICellRendererParams<Category>) => {
+          const category = params.data;
+          if (!category) return null;
+
+          if (!category.imageUrl) {
+            return (
+              <div className="flex h-full items-center">
+                <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 text-slate-400 ring-1 ring-inset ring-slate-200">
+                  <ImageOff size={18} strokeWidth={1.8} />
+                </span>
+              </div>
+            );
+          }
+
+          const src = category.imageUrl;
+
+          return (
+            <div className="flex h-full items-center">
+              <button
+                type="button"
+                title="View image"
+                aria-label={`View image of ${category.name}`}
+                onClick={() => setPreview({ src, title: category.name })}
+                className="group relative h-11 w-11 overflow-hidden rounded-lg !p-0 ring-1 ring-slate-200 transition-shadow hover:ring-2 hover:ring-indigo-500"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={category.name}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute inset-0 flex items-center justify-center bg-slate-900/50 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  <ZoomIn size={16} />
+                </span>
+              </button>
+            </div>
+          );
+        },
+      },
+      {
         headerName: "Actions",
         colId: "actions",
+        width: 120,
+        minWidth: 120,
+        maxWidth: 140,
+        flex: 0,
         sortable: false,
         filter: false,
         resizable: false,
-        minWidth: 120,
-        maxWidth: 130,
-        flex: 0,
         cellRenderer: (params: ICellRendererParams<Category>) => {
           const category = params.data;
           if (!category) return null;
@@ -209,77 +299,74 @@ export default function CategoriesPage() {
                 icon={<Pencil size={16} strokeWidth={1.9} />}
                 onClick={() => openEditForm(category)}
               />
+
               <IconButton
                 label={`Delete ${category.name}`}
                 tone="danger"
                 icon={<Trash2 size={16} strokeWidth={1.9} />}
-                onClick={() => void handleDelete(category)}
+                onClick={() => setDeleteTarget(category)}
               />
             </div>
           );
         },
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
   return (
     <div className="space-y-6 font-sans">
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <p className="text-sm font-medium text-slate-500">
-          Manage your product categories.
-        </p>
+      {/* Summary */}
+      <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard
+          label="Total Categories"
+          value={loading ? "—" : stats.total}
+          icon={FolderOpen}
+          tone="indigo"
+        />
+        <StatCard
+          label="Active"
+          value={loading ? "—" : stats.active}
+          icon={CheckCircle2}
+          tone="emerald"
+        />
+        <StatCard
+          label="Inactive"
+          value={loading ? "—" : stats.inactive}
+          icon={Archive}
+          tone="slate"
+        />
+      </section>
 
-        <Button
-          onClick={openAddForm}
-          leftIcon={<Plus size={17} strokeWidth={2.5} />}
-        >
-          Add Category
-        </Button>
-      </div>
-
-      {pageError && (
-        <div
-          role="alert"
-          className="flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
-        >
-          <span className="flex items-start gap-2.5">
-            <AlertCircle size={18} className="mt-0.5 shrink-0" />
-            {pageError}
-          </span>
-          <IconButton
-            label="Dismiss error"
-            icon={<X size={17} />}
-            onClick={() => setPageError("")}
-            className="h-7 w-7 text-red-500 hover:bg-red-100 hover:text-red-700"
-          />
-        </div>
-      )}
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-5 flex items-center justify-between gap-3">
+      {/* Table card */}
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:px-6">
           <div>
             <h2 className="text-base font-semibold text-slate-900">
               All Categories
             </h2>
             <p className="mt-0.5 text-sm text-slate-500">
-              Browse, edit and manage your categories.
+              Browse, edit and manage your product categories.
             </p>
           </div>
 
-          <span className="shrink-0 rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-100">
-            {categories.length} total
-          </span>
+          <Button
+            onClick={openAddForm}
+            leftIcon={<Plus size={17} strokeWidth={2.5} />}
+          >
+            Add Category
+          </Button>
         </div>
 
-        <DataGrid<Category>
-          rowData={categories}
-          columnDefs={columnDefs}
-          loading={loading}
-          getRowId={({ data }) => String(data.id)}
-          searchPlaceholder="Search categories..."
-        />
+        <div className="p-5 sm:p-6">
+          <DataGrid<Category>
+            rowData={categories}
+            columnDefs={columnDefs}
+            loading={loading}
+            getRowId={({ data }) => String(data.id)}
+            searchPlaceholder="Search categories..."
+          />
+        </div>
       </section>
 
       {formOpen && (
@@ -287,6 +374,29 @@ export default function CategoriesPage() {
           initialData={editing}
           onSubmit={handleSave}
           onCancel={closeForm}
+        />
+      )}
+
+      {preview && (
+        <ImagePreviewModal
+          src={preview.src}
+          title={preview.title}
+          onClose={() => setPreview(null)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          open
+          title="Delete Category?"
+          message={`Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.`}
+          confirmText="Delete Category"
+          cancelText="Cancel"
+          loading={deleting}
+          onConfirm={() => void handleDelete()}
+          onCancel={() => {
+            if (!deleting) setDeleteTarget(null);
+          }}
         />
       )}
     </div>

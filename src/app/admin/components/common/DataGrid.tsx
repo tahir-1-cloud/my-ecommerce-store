@@ -12,30 +12,60 @@ import type {
   GetRowIdParams,
   GridOptions,
 } from "ag-grid-community";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
+
+import Loader from "../ui/Loader";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const adminTheme = themeQuartz.withParams({
+  // Brand
   accentColor: "#4f46e5",
+  fontFamily: "inherit",
+
+  // Surfaces
   backgroundColor: "#ffffff",
   foregroundColor: "#334155",
   borderColor: "#e2e8f0",
-  headerBackgroundColor: "#f8fafc",
-  headerTextColor: "#475569",
+  wrapperBorder: { color: "#e2e8f0", width: 1, style: "solid" },
+  wrapperBorderRadius: 14,
+  borderRadius: 8,
+
+  // Header (sidebar jaisa deep indigo)
+  headerBackgroundColor: "#252268",
+  headerTextColor: "#ffffff",
   headerFontSize: 12,
   headerFontWeight: 600,
+  headerHeight: 48,
+  headerColumnBorder: { color: "rgba(255,255,255,0.08)", width: 1 },
+  headerColumnResizeHandleColor: "#6366f1",
+  headerColumnResizeHandleHeight: "40%",
+  headerCellHoverBackgroundColor: "#2f2c8c",
+  iconButtonHoverBackgroundColor: "rgba(255,255,255,0.12)",
+
+  // Rows
   oddRowBackgroundColor: "#ffffff",
   rowHoverColor: "#eef2ff",
   selectedRowBackgroundColor: "#e0e7ff",
+  rowBorder: { color: "#f1f5f9", width: 1, style: "solid" },
+  rowHeight: 64,
   fontSize: 14,
-  rowHeight: 60,
-  headerHeight: 46,
-  wrapperBorderRadius: 12,
-  borderRadius: 8,
   cellHorizontalPadding: 20,
+
+  // Inputs / filter popups
   inputFocusBorder: { color: "#6366f1" },
   inputFocusShadow: { color: "rgba(99,102,241,0.15)", radius: 4 },
+  menuBackgroundColor: "#ffffff",
+  menuBorder: { color: "#e2e8f0", width: 1, style: "solid" },
+  menuShadow: {
+    color: "rgba(15,23,42,0.16)",
+    radius: 24,
+    offsetY: 12,
+  },
+
+  // Pagination footer
+  // Pagination footer
+  footerRowBorder: { color: "#e2e8f0", width: 1, style: "solid" },
 });
 
 type DataGridProps<T> = {
@@ -73,38 +103,70 @@ export default function DataGrid<T>({
 
   return (
     <div className="space-y-4">
-      <div className="relative w-full sm:max-w-xs">
-        <Search
-          size={16}
-          strokeWidth={2}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-        />
-        <input
-          type="text"
-          value={quickFilter}
-          onChange={(event) => setQuickFilter(event.target.value)}
-          placeholder={searchPlaceholder}
-          className="h-10 w-full rounded-xl !border !border-slate-300 !bg-white pl-9 pr-3 text-sm text-slate-900 !outline-none transition-colors placeholder:text-slate-400 hover:!border-slate-400 focus:!border-indigo-500 focus:ring-4 focus:ring-indigo-500/15"
-        />
+      {/* Toolbar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:max-w-sm">
+          <Search
+            size={16}
+            strokeWidth={2}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+          <input
+            type="text"
+            value={quickFilter}
+            onChange={(event) => setQuickFilter(event.target.value)}
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+            className="h-10 w-full rounded-xl !border !border-slate-200 !bg-slate-50 pl-10 pr-10 text-sm !text-slate-900 !outline-none transition-colors duration-150 placeholder:text-slate-400 hover:!border-slate-300 focus:!border-indigo-500 focus:!bg-white focus:ring-4 focus:ring-indigo-500/15"
+          />
+          {quickFilter && (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() => setQuickFilter("")}
+              className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md !bg-transparent !text-slate-400 transition-colors hover:!bg-slate-200 hover:!text-slate-700"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {!loading && (
+          <p className="text-sm font-medium text-slate-500">
+            <span className="font-semibold text-slate-900">
+              {rowData.length}
+            </span>{" "}
+            {rowData.length === 1 ? "record" : "records"}
+          </p>
+        )}
       </div>
 
-      <div className="w-full">
-        <AgGridReact<T>
-          theme={adminTheme}
-          rowData={rowData}
-          columnDefs={columnDefs}
-          defaultColDef={defaultColDef}
-          getRowId={getRowId}
-          loading={loading}
-          quickFilterText={quickFilter}
-          pagination
-          paginationPageSize={pageSize}
-          paginationPageSizeSelector={[10, 25, 50]}
-          domLayout="autoHeight"
-          suppressCellFocus
-          overlayNoRowsTemplate='<span style="color:#64748b;font-size:14px">No records found.</span>'
-          {...gridOptions}
-        />
+      {/* Grid */}
+      <div className="relative">
+        <div className={loading ? "min-h-[360px]" : ""}>
+          <AgGridReact<T>
+            theme={adminTheme}
+            rowData={rowData}
+            columnDefs={columnDefs}
+            defaultColDef={defaultColDef}
+            getRowId={getRowId}
+            quickFilterText={quickFilter}
+            pagination
+            paginationPageSize={pageSize}
+            paginationPageSizeSelector={[10, 25, 50]}
+            domLayout="autoHeight"
+            suppressCellFocus
+            suppressNoRowsOverlay={loading}
+            overlayNoRowsTemplate='<span style="color:#64748b;font-size:14px;font-weight:500">No records found.</span>'
+            {...gridOptions}
+          />
+        </div>
+
+        {loading && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-[14px] bg-white/85">
+            <Loader size="md" />
+          </div>
+        )}
       </div>
     </div>
   );

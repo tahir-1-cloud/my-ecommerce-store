@@ -14,34 +14,34 @@ namespace Ecommerce.API.Controllers;
 public sealed class CategoriesController : ControllerBase
 {
     private readonly ICategoryRepository _repository;
+    private readonly ICloudinaryImageService _imageService;
 
-    public CategoriesController(ICategoryRepository repository)
+    public CategoriesController(
+        ICategoryRepository repository,
+        ICloudinaryImageService imageService)
     {
         _repository = repository;
+        _imageService = imageService;
     }
 
-    // GET: api/categories
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<List<CategoryResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<CategoryResponse>>> GetAll(
+        CancellationToken cancellationToken)
     {
         var categories = await _repository.GetAllAsync(cancellationToken);
 
-        var response = categories
-            .Select(MapToResponse)
-            .ToList();
-
-        return Ok(response);
+        return Ok(categories.Select(MapToResponse).ToList());
     }
 
-    // GET: api/categories/1
     [HttpGet("{id:int}")]
     [AllowAnonymous]
-    public async Task<ActionResult<CategoryResponse>> GetById(int id,CancellationToken cancellationToken)
+    public async Task<ActionResult<CategoryResponse>> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
         var category = await _repository.GetByIdAsync(
-            id,
-            cancellationToken);
+            id, cancellationToken);
 
         if (category is null)
             return NotFound(new { message = "Category not found." });
@@ -49,17 +49,24 @@ public sealed class CategoriesController : ControllerBase
         return Ok(MapToResponse(category));
     }
 
-    // POST: api/categories
+
+
     [HttpPost]
-    public async Task<ActionResult<CategoryResponse>> Create([FromBody] CategoryRequest request,
+    [Consumes("multipart/form-data")]
+    [AllowAnonymous]
+    public async Task<ActionResult<CategoryResponse>> Create(
+        [FromForm] CategoryRequest request,
         CancellationToken cancellationToken)
     {
         var name = request.Name.Trim();
         var slug = GenerateSlug(name);
 
-        if (await _repository.ExistsBySlugAsync(
-                slug,
-                cancellationToken: cancellationToken))
+        // Check for duplicate category.
+        var exists = await _repository.ExistsBySlugAsync(
+            slug,
+            cancellationToken: cancellationToken);
+
+        if (exists)
         {
             return Conflict(new
             {
@@ -67,33 +74,52 @@ public sealed class CategoriesController : ControllerBase
             });
         }
 
+        // Upload image to Cloudinary.
+        string? imageUrl = null;
+
+        if (request.Image is not null)
+        {
+            try
+            {
+                imageUrl = await _imageService.UploadAsync(
+                    request.Image,
+                    cancellationToken);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // Save category to database.
         var category = new Category
         {
             Name = name,
             Slug = slug,
             Description = Normalize(request.Description),
-            ImageUrl = Normalize(request.ImageUrl),
+            ImageUrl = imageUrl,
             IsActive = request.IsActive
         };
 
         await _repository.AddAsync(category, cancellationToken);
 
-        var response = MapToResponse(category);
-
         return CreatedAtAction(
             nameof(GetById),
             new { id = category.Id },
-            response);
+            MapToResponse(category));
     }
 
-    // PUT: api/categories/1
+
     [HttpPut("{id:int}")]
-    public async Task<ActionResult<CategoryResponse>> Update(int id,[FromBody] CategoryRequest request,
+    [Consumes("multipart/form-data")]
+    [AllowAnonymous]
+    public async Task<ActionResult<CategoryResponse>> Update(
+        int id,
+        [FromForm] CategoryRequest request,
         CancellationToken cancellationToken)
     {
         var category = await _repository.GetByIdAsync(
-            id,
-            cancellationToken);
+            id, cancellationToken);
 
         if (category is null)
             return NotFound(new { message = "Category not found." });
@@ -112,10 +138,24 @@ public sealed class CategoriesController : ControllerBase
             });
         }
 
+        // Keep the existing image if no new file was submitted.
+        if (request.Image is not null)
+        {
+            try
+            {
+                category.ImageUrl = await _imageService.UploadAsync(
+                    request.Image,
+                    cancellationToken);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         category.Name = name;
         category.Slug = slug;
         category.Description = Normalize(request.Description);
-        category.ImageUrl = Normalize(request.ImageUrl);
         category.IsActive = request.IsActive;
         category.UpdatedAt = DateTime.UtcNow;
 
@@ -124,22 +164,19 @@ public sealed class CategoriesController : ControllerBase
         return Ok(MapToResponse(category));
     }
 
-    // DELETE: api/categories/1
     [HttpDelete("{id:int}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Delete(
         int id,
         CancellationToken cancellationToken)
     {
         var category = await _repository.GetByIdAsync(
-            id,
-            cancellationToken);
+            id, cancellationToken);
 
         if (category is null)
             return NotFound(new { message = "Category not found." });
 
-        if (await _repository.HasProductsAsync(
-                id,
-                cancellationToken))
+        if (await _repository.HasProductsAsync(id, cancellationToken))
         {
             return Conflict(new
             {

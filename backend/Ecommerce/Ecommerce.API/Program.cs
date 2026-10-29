@@ -3,6 +3,7 @@ using Ecommerce.Application.Interfaces;
 using Ecommerce.Infrastructure.Data;
 using Ecommerce.Infrastructure.Identity;
 using Ecommerce.Infrastructure.Repositories;
+using Ecommerce.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,6 +11,17 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowNextJs", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 //Database connection string
 builder.Services.AddDbContext<EcommerceDbContext>(options =>
@@ -81,6 +93,7 @@ builder.Services.Configure<JwtOptions>(
     builder.Configuration.GetSection("Jwt"));
 
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
+builder.Services.AddScoped<ICloudinaryImageService,CloudinaryImageService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 // Controllers
@@ -101,7 +114,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.UseCors("AllowNextJs");
 app.UseAuthentication();
 app.UseAuthorization();
 

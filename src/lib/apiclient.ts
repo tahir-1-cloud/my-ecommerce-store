@@ -1,3 +1,4 @@
+
 import { ApiError } from "./apierror";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -13,13 +14,19 @@ export async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers = new Headers(options.headers);
+  const isFormData =
+    typeof FormData !== "undefined" &&
+    options.body instanceof FormData;
 
-  if (options.body && !headers.has("Content-Type")) {
+  // FormData: browser sets multipart/form-data with boundary.
+  // JSON requests: set application/json when a body exists.
+  if (isFormData) {
+    headers.delete("Content-Type");
+  } else if (options.body != null && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
   // Supports common JWT storage keys.
-  // Match this to the key used by your existing login flow.
   if (typeof window !== "undefined") {
     const token =
       localStorage.getItem("accessToken") ??
@@ -30,17 +37,18 @@ export async function apiRequest<T>(
     }
   }
 
+  const baseUrl = API_BASE_URL.replace(/\/+$/, "");
+  const cleanEndpoint = endpoint.replace(/^\/+/, "");
+  const url = `${baseUrl}/${cleanEndpoint}`;
+
   let response: Response;
 
   try {
-    response = await fetch(
-      `${API_BASE_URL.replace(/\/+$/, "")}/${endpoint.replace(/^\/+/, "")}`,
-      {
-        ...options,
-        headers,
-        cache: "no-store",
-      }
-    );
+    response = await fetch(url, {
+      ...options,
+      headers,
+      cache: "no-store",
+    });
   } catch {
     throw new ApiError(
       "Unable to connect to the server. Check that the API is running.",

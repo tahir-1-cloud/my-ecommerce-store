@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -16,9 +17,7 @@ namespace Ecommerce.Application.DTOs.Categories
         [StringLength(500)]
         public string? Description { get; set; }
 
-        [Url]
-        [StringLength(2048)]
-        public string? ImageUrl { get; set; }
+        public IFormFile? Image { get; set; }
 
         public bool IsActive { get; set; } = true;
     }
