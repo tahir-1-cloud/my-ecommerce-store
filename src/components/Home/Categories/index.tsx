@@ -1,39 +1,94 @@
 "use client";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { useCallback, useRef, useEffect } from "react";
-import data from "./categoryData";
-import Image from "next/image";
 
-// Import Swiper styles
-import "swiper/css/navigation";
-import "swiper/css";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import { useCallback, useRef, useEffect, useState } from "react";
+
 import SingleItem from "./SingleItem";
+import { categoryService } from "@/services/categoryService";
+import type { Category } from "@/types/category";
 
 const Categories = () => {
-  const sliderRef = useRef(null);
+  const sliderRef = useRef<any>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [visible, setVisible] = useState(false);
 
   const handlePrev = useCallback(() => {
-    if (!sliderRef.current) return;
-    sliderRef.current.swiper.slidePrev();
+    sliderRef.current?.swiper?.slidePrev();
   }, []);
 
   const handleNext = useCallback(() => {
-    if (!sliderRef.current) return;
-    sliderRef.current.swiper.slideNext();
+    sliderRef.current?.swiper?.slideNext();
   }, []);
 
   useEffect(() => {
-    if (sliderRef.current) {
-      sliderRef.current.swiper.init();
-    }
+    let isMounted = true;
+
+    const loadCategories = async () => {
+      try {
+        const response = await categoryService.getAll();
+
+        if (isMounted && Array.isArray(response)) {
+          setCategories(response);
+        }
+      } catch (error) {
+        console.error("Failed to load categories:", error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
+  // Scroll par section ke andar aate hi animation chalti hai (sirf ek baar)
+  useEffect(() => {
+    const node = sectionRef.current;
+    if (!node) return;
+
+    if (
+      typeof IntersectionObserver === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const canLoop = categories.length > 6;
+
   return (
-    <section className="overflow-hidden pt-17.5">
+    <section ref={sectionRef} className="overflow-hidden pt-17.5">
       <div className="max-w-[1170px] w-full mx-auto px-4 sm:px-8 xl:px-0 pb-15 border-b border-gray-3">
         <div className="swiper categories-carousel common-carousel">
-          {/* <!-- section title --> */}
-          <div className="mb-10 flex items-center justify-between">
+          <div
+            className="mb-10 flex items-center justify-between transition-all duration-700 ease-out"
+            style={{
+              opacity: visible ? 1 : 0,
+              transform: visible ? "translateY(0)" : "translateY(24px)",
+            }}
+          >
             <div>
               <span className="flex items-center gap-2.5 font-medium text-dark mb-1.5">
                 <svg
@@ -72,6 +127,7 @@ const Categories = () => {
                 </svg>
                 Categories
               </span>
+
               <h2 className="font-semibold text-xl xl:text-heading-5 text-dark">
                 Browse by Category
               </h2>
@@ -116,30 +172,48 @@ const Categories = () => {
             </div>
           </div>
 
-          <Swiper
-            ref={sliderRef}
-            slidesPerView={6}
-            breakpoints={{
-              // when window width is >= 640px
-              0: {
-                slidesPerView: 2,
-              },
-              1000: {
-                slidesPerView: 4,
-                // spaceBetween: 4,
-              },
-              // when window width is >= 768px
-              1200: {
-                slidesPerView: 6,
-              },
-            }}
-          >
-            {data.map((item, key) => (
-              <SwiperSlide key={key}>
-                <SingleItem item={item} />
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          {!loading && categories.length > 0 && (
+            <Swiper
+              ref={sliderRef}
+              modules={[Autoplay]}
+              slidesPerView={6}
+              loop={canLoop}
+              speed={700}
+              autoplay={{
+                delay: 2500,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+              }}
+              breakpoints={{
+                0: {
+                  slidesPerView: 2,
+                },
+                1000: {
+                  slidesPerView: 4,
+                },
+                1200: {
+                  slidesPerView: 6,
+                },
+              }}
+              className="!py-4"
+            >
+              {categories.map((category, index) => (
+                <SwiperSlide key={category.id}>
+                  <SingleItem
+                    item={category}
+                    index={index}
+                    visible={visible}
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          )}
+
+          {!loading && categories.length === 0 && (
+            <p className="text-center text-gray-500">
+              No categories available.
+            </p>
+          )}
         </div>
       </div>
     </section>

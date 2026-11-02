@@ -40,7 +40,7 @@ const sections: MenuSection[] = [
     items: [
       { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
       { label: "Orders", href: "/admin/orders", icon: ShoppingBag },
-      { label: "Products", href: "/admin/products", icon: Package },
+      { label: "Products", href: "/admin/products/list", icon: Package },
       { label: "Categories", href: "/admin/categories", icon: Tags },
       { label: "Customers", href: "/admin/customers", icon: Users },
     ],

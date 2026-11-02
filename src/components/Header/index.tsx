@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import Link from "next/link";
 import CustomSelect from "./CustomSelect";
 import { menuData } from "./menuData";
@@ -9,6 +9,8 @@ import { useSelector } from "react-redux";
 import { selectTotalPrice } from "@/redux/features/cart-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
 import Image from "next/image";
+import { categoryService } from "@/services/categoryService";
+import type { Category } from "@/types/category";
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +20,7 @@ const Header = () => {
 
   const product = useAppSelector((state) => state.cartReducer.items);
   const totalPrice = useSelector(selectTotalPrice);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const handleOpenCartModal = () => {
     openCartModal();
@@ -32,21 +35,37 @@ const Header = () => {
     }
   };
 
-  useEffect(() => {
-    window.addEventListener("scroll", handleStickyMenu);
-  });
+useEffect(() => {
+  const loadCategories = async () => {
+    try {
+      const response = await categoryService.getAll();
+      console.log("Categories loaded:", response);
 
-  const options = [
-    { label: "All Categories", value: "0" },
-    { label: "Desktop", value: "1" },
-    { label: "Laptop", value: "2" },
-    { label: "Monitor", value: "3" },
-    { label: "Phone", value: "4" },
-    { label: "Watch", value: "5" },
-    { label: "Mouse", value: "6" },
-    { label: "Tablet", value: "7" },
-  ];
+      if (Array.isArray(response)) {
+        setCategories(response);
+      }
+    } catch (error) {
+      console.error("Failed to load categories:", error);
+    }
+  };
 
+  loadCategories();
+
+  window.addEventListener("scroll", handleStickyMenu);
+
+  return () => {
+    window.removeEventListener("scroll", handleStickyMenu);
+  };
+}, []);
+
+ 
+const options = [
+  { label: "All Categories", value: "0" },
+  ...categories.map((category) => ({
+    label: category.name,
+    value: String(category.id),
+  })),
+];
   return (
     <header
       className={`fixed left-0 top-0 w-full z-9999 bg-white transition-all ease-in-out duration-300 ${
@@ -148,7 +167,7 @@ const Header = () => {
                   24/7 SUPPORT
                 </span>
                 <p className="font-medium text-custom-sm text-dark">
-                  (+965) 7492-3477
+                  (+92) 3254023495
                 </p>
               </div>
             </div>

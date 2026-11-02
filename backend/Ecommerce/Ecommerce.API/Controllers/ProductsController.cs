@@ -15,9 +15,7 @@ public class ProductsController : ControllerBase
     private readonly IProductRepository _productRepository;
     private readonly ICloudinaryImageService _imageService;
 
-    public ProductsController(
-        IProductRepository productRepository,
-        ICloudinaryImageService imageService)
+    public ProductsController(IProductRepository productRepository,ICloudinaryImageService imageService)
     {
         _productRepository = productRepository;
         _imageService = imageService;
@@ -25,8 +23,7 @@ public class ProductsController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<IActionResult> GetAll(
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
         var products = await _productRepository.GetAllAsync(
             cancellationToken);
@@ -96,6 +93,7 @@ public class ProductsController : ControllerBase
 
         var product = new Product
         {
+            CreatedAt=DateTime.UtcNow,
             Name = request.Name.Trim(),
             Slug = slug,
             Description = request.Description?.Trim(),
@@ -207,7 +205,7 @@ public class ProductsController : ControllerBase
                 message = "One or more SKUs already exist."
             });
         }
-
+        product.UpdatedAt = DateTime.UtcNow;
         product.Name = request.Name.Trim();
         product.Slug = await GenerateUniqueSlugAsync(
             request.Name, id, cancellationToken);

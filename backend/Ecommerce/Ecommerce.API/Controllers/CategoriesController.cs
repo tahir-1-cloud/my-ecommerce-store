@@ -94,6 +94,7 @@ public sealed class CategoriesController : ControllerBase
         // Save category to database.
         var category = new Category
         {
+            CreatedAt = DateTime.UtcNow,
             Name = name,
             Slug = slug,
             Description = Normalize(request.Description),
@@ -152,7 +153,6 @@ public sealed class CategoriesController : ControllerBase
                 return BadRequest(new { message = ex.Message });
             }
         }
-
         category.Name = name;
         category.Slug = slug;
         category.Description = Normalize(request.Description);
