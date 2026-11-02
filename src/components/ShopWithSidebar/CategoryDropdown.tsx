@@ -1,20 +1,40 @@
+
 "use client";
 
 import { useState } from "react";
+import type { Category } from "@/types/category";
 
-const CategoryItem = ({ category }) => {
-  const [selected, setSelected] = useState(false);
+interface CategoryDropdownProps {
+  categories: Category[];
+  selectedIds: number[];
+  onChange: (ids: number[]) => void;
+}
+
+interface CategoryItemProps {
+  category: Category;
+  selected: boolean;
+  onToggle: (id: number) => void;
+}
+
+const CategoryItem = ({
+  category,
+  selected,
+  onToggle,
+}: CategoryItemProps) => {
   return (
     <button
+      type="button"
       className={`${
-        selected && "text-blue"
-      } group flex items-center justify-between ease-out duration-200 hover:text-blue `}
-      onClick={() => setSelected(!selected)}
+        selected ? "text-blue" : ""
+      } group flex items-center justify-between ease-out duration-200 hover:text-blue`}
+      onClick={() => onToggle(category.id)}
     >
       <div className="flex items-center gap-2">
         <div
           className={`cursor-pointer flex items-center justify-center rounded w-4 h-4 border ${
-            selected ? "border-blue bg-blue" : "bg-white border-gray-3"
+            selected
+              ? "border-blue bg-blue"
+              : "bg-white border-gray-3"
           }`}
         >
           <svg
@@ -43,31 +63,51 @@ const CategoryItem = ({ category }) => {
           selected ? "text-white bg-blue" : "bg-gray-2"
         } inline-flex rounded-[30px] text-custom-xs px-2 ease-out duration-200 group-hover:text-white group-hover:bg-blue`}
       >
-        {category.products}
+       <span
+  className={`${
+    selected ? "text-white bg-blue" : "bg-gray-2"
+  } inline-flex rounded-[30px] text-custom-xs px-2 ease-out duration-200 group-hover:text-white group-hover:bg-blue`}
+>
+  {"products" in category &&
+  typeof category.products === "number"
+    ? category.products
+    : ""}
+</span>
       </span>
     </button>
   );
 };
 
-const CategoryDropdown = ({ categories }) => {
+const CategoryDropdown = ({
+  categories,
+  selectedIds,
+  onChange,
+}: CategoryDropdownProps) => {
   const [toggleDropdown, setToggleDropdown] = useState(true);
+
+  const handleToggleCategory = (id: number) => {
+    const updatedIds = selectedIds.includes(id)
+      ? selectedIds.filter((selectedId) => selectedId !== id)
+      : [...selectedIds, id];
+
+    onChange(updatedIds);
+  };
 
   return (
     <div className="bg-white shadow-1 rounded-lg">
       <div
-        onClick={(e) => {
-          e.preventDefault();
-          setToggleDropdown(!toggleDropdown);
-        }}
+        onClick={() => setToggleDropdown(!toggleDropdown)}
         className={`cursor-pointer flex items-center justify-between py-3 pl-6 pr-5.5 ${
-          toggleDropdown && "shadow-filter"
+          toggleDropdown ? "shadow-filter" : ""
         }`}
       >
         <p className="text-dark">Category</p>
+
         <button
+          type="button"
           aria-label="button for category dropdown"
           className={`text-dark ease-out duration-200 ${
-            toggleDropdown && "rotate-180"
+            toggleDropdown ? "rotate-180" : ""
           }`}
         >
           <svg
@@ -88,15 +128,18 @@ const CategoryDropdown = ({ categories }) => {
         </button>
       </div>
 
-      {/* dropdown && 'shadow-filter */}
-      {/* <!-- dropdown menu --> */}
       <div
         className={`flex-col gap-3 py-6 pl-6 pr-5.5 ${
           toggleDropdown ? "flex" : "hidden"
         }`}
       >
-        {categories.map((category, key) => (
-          <CategoryItem key={key} category={category} />
+        {categories.map((category) => (
+          <CategoryItem
+            key={category.id}
+            category={category}
+            selected={selectedIds.includes(category.id)}
+            onToggle={handleToggleCategory}
+          />
         ))}
       </div>
     </div>

@@ -1,9 +1,18 @@
 "use client";
 
-import { store } from "./store";
 import { Provider } from "react-redux";
-import React from "react";
+import { store } from "./store";
+import WishlistHydration from "@/components/Common/WishlistHydration";
 
-export function ReduxProvider({ children }: { children: React.ReactNode }) {
-  return <Provider store={store}>{children}</Provider>;
+interface ReduxProviderProps {
+  children: React.ReactNode;
+}
+
+export function ReduxProvider({ children }: ReduxProviderProps) {
+  return (
+    <Provider store={store}>
+      <WishlistHydration />
+      {children}
+    </Provider>
+  );
 }

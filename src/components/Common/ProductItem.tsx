@@ -5,36 +5,39 @@ import { Product } from "@/types/product";
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { updateQuickView } from "@/redux/features/quickView-slice";
 import { addItemToCart } from "@/redux/features/cart-slice";
-import { addItemToWishlist } from "@/redux/features/wishlist-slice";
+import {
+  toggleWishlistItem,
+} from "@/redux/features/wishlist-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
 import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
+import { AppDispatch, useAppSelector } from "@/redux/store";
 import Link from "next/link";
+import {
+  formatPrice,
+  getPriceInfo,
+  getProductImage,
+  toStoreItem,
+} from "@/lib/helper/productHelpers";
 
 const ProductItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
-
   const dispatch = useDispatch<AppDispatch>();
+  const storeItem = toStoreItem(item);
+  const image = getProductImage(item);
+  const { price, oldPrice } = getPriceInfo(item);
 
-  // update the QuickView state
   const handleQuickViewUpdate = () => {
-    dispatch(updateQuickView({ ...item }));
+    dispatch(updateQuickView({ ...storeItem }));
   };
 
-  // add to cart
   const handleAddToCart = () => {
-    dispatch(
-      addItemToCart({
-        ...item,
-        quantity: 1,
-      })
-    );
+    dispatch(addItemToCart({ ...storeItem, quantity: 1 }));
   };
 
   const handleItemToWishList = () => {
     dispatch(
-      addItemToWishlist({
-        ...item,
+      toggleWishlistItem({
+        ...storeItem,
         status: "available",
         quantity: 1,
       })
@@ -42,13 +45,19 @@ const ProductItem = ({ item }: { item: Product }) => {
   };
 
   const handleProductDetails = () => {
-    dispatch(updateproductDetails({ ...item }));
+    dispatch(updateproductDetails({ ...storeItem }));
   };
 
   return (
     <div className="group">
       <div className="relative overflow-hidden flex items-center justify-center rounded-lg bg-[#F6F7FB] min-h-[270px] mb-4">
-        <Image src={item.imgs.previews[0]} alt="" width={250} height={250} />
+        {image ? (
+          <Image src={image} alt={item.name} width={250} height={250} />
+        ) : (
+          <div className="flex h-[250px] w-full items-center justify-center text-sm text-gray-4">
+            No image available
+          </div>
+        )}
 
         <div className="absolute left-0 bottom-0 translate-y-full w-full flex items-center justify-center gap-2.5 pb-5 ease-linear duration-200 group-hover:translate-y-0">
           <button
@@ -117,51 +126,28 @@ const ProductItem = ({ item }: { item: Product }) => {
 
       <div className="flex items-center gap-2.5 mb-2">
         <div className="flex items-center gap-1">
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
-          <Image
-            src="/images/icons/icon-star.svg"
-            alt="star icon"
-            width={14}
-            height={14}
-          />
+          <Image src="/images/icons/icon-star.svg" alt="star icon" width={14} height={14} />
+          <Image src="/images/icons/icon-star.svg" alt="star icon" width={14} height={14} />
+          <Image src="/images/icons/icon-star.svg" alt="star icon" width={14} height={14} />
+          <Image src="/images/icons/icon-star.svg" alt="star icon" width={14} height={14} />
+          <Image src="/images/icons/icon-star.svg" alt="star icon" width={14} height={14} />
         </div>
 
-        <p className="text-custom-sm">({item.reviews})</p>
+        <p className="text-custom-sm">({storeItem.reviews})</p>
       </div>
 
       <h3
         className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5"
         onClick={() => handleProductDetails()}
       >
-        <Link href="/shop-details"> {item.title} </Link>
+        <Link href={`/shop-details?id=${item.id}`}>{item.name}</Link>
       </h3>
 
       <span className="flex items-center gap-2 font-medium text-lg">
-        <span className="text-dark">${item.discountedPrice}</span>
-        <span className="text-dark-4 line-through">${item.price}</span>
+        <span className="text-dark">{formatPrice(price)}</span>
+        {oldPrice !== null && (
+          <span className="text-dark-4 line-through">{formatPrice(oldPrice)}</span>
+        )}
       </span>
     </div>
   );
