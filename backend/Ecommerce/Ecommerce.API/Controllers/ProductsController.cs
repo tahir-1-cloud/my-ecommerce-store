@@ -391,6 +391,7 @@ public class ProductsController : ControllerBase
             Slug = product.Slug,
             Description = product.Description,
             Brand = product.Brand,
+            CreatedAt = product.CreatedAt,
             IsActive = product.IsActive,
             IsFeatured = product.IsFeatured,
 

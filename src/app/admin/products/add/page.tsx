@@ -230,7 +230,7 @@ export default function AddProductPage() {
       await productService.create(productData);
 
       notify.created("Product created successfully.");
-      router.push("/admin/products");
+      router.push("/admin/products/list");
     } catch (error) {
       const message =
         error instanceof ApiError

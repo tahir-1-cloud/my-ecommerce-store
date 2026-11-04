@@ -22,6 +22,7 @@ namespace Ecommerce.Application.DTOs.Products
 
         public bool IsFeatured { get; set; }
 
+        public DateTime CreatedAt { get; set; }
         public List<int> CategoryIds { get; set; } = [];
 
         public List<ProductCategoryResponse> Categories { get; set; } = [];

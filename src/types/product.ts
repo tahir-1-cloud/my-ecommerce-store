@@ -29,6 +29,7 @@ export interface Product {
   description: string | null;
   brand: string | null;
   isActive: boolean;
+  createdAt: string;
   isFeatured: boolean;
   categoryIds: number[];
   categories: ProductCategory[];
