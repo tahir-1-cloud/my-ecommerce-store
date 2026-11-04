@@ -56,11 +56,19 @@ const getPages = (
 };
 
 const getProductPrice = (product: Product): number => {
-  const variant =
-    product.variants?.find((item) => item.isActive) ??
-    product.variants?.[0];
+  const activeVariants =
+    product.variants?.filter((item) => item.isActive) ?? [];
 
-  return variant?.price ?? 0;
+  const variants =
+    activeVariants.length > 0
+      ? activeVariants
+      : product.variants ?? [];
+
+  const prices = variants
+    .map((item) => Number(item.price))
+    .filter((price) => Number.isFinite(price) && price >= 0);
+
+  return prices.length > 0 ? Math.min(...prices) : 0;
 };
 
 const ShopWithSidebar = () => {
@@ -79,6 +87,11 @@ const ShopWithSidebar = () => {
   const [sortOption, setSortOption] = useState<SortOption>("0");
 
   const [page, setPage] = useState(1);
+
+  const [selectedPrice, setSelectedPrice] = useState<{
+      from: number;
+      to: number;
+    } | null>(null);
 
   const options = [
     { label: "Latest Products", value: "0" },
@@ -187,28 +200,75 @@ const ShopWithSidebar = () => {
     selectedCategoryIds.includes(category.id)
   );
 
+const priceBounds = useMemo(() => {
+  const prices = products
+    .filter((product) => product.isActive)
+    .map(getProductPrice);
+
+  const validPrices = prices.filter(
+    (price) => Number.isFinite(price) && price >= 0
+  );
+
+  if (validPrices.length === 0) {
+    return { min: 0, max: 100 };
+  }
+
+  return {
+    min: Math.floor(Math.min(...validPrices)),
+    max: Math.ceil(Math.max(...validPrices)),
+  };
+}, [products]);
+
+// Initialize price range when backend prices are available.
+useEffect(() => {
+  setSelectedPrice({
+    from: priceBounds.min,
+    to: priceBounds.max,
+  });
+}, [priceBounds.min, priceBounds.max]);
+
+// Initialize price range when backend prices are available.
+useEffect(() => {
+  setSelectedPrice({
+    from: priceBounds.min,
+    to: priceBounds.max,
+  });
+}, [priceBounds.min, priceBounds.max]);
+
   // Filter and sort products
-  const filteredProducts = useMemo(() => {
-    let result = products.filter((product) => product.isActive);
+const filteredProducts = useMemo(() => {
+  let result = products.filter((product) => product.isActive);
 
-    if (selectedCategoryIds.length > 0) {
-      result = result.filter((product) =>
-        product.categoryIds?.some((categoryId) =>
-          selectedCategoryIds.includes(categoryId)
-        )
+  // Category filter
+  if (selectedCategoryIds.length > 0) {
+    result = result.filter((product) =>
+      product.categoryIds?.some((categoryId) =>
+        selectedCategoryIds.includes(categoryId)
+      )
+    );
+  }
+
+  // Price filter
+  if (selectedPrice) {
+    result = result.filter((product) => {
+      const price = getProductPrice(product);
+
+      return (
+        price >= selectedPrice.from &&
+        price <= selectedPrice.to
       );
-    }
+    });
+  }
 
-    if (sortOption === "0") {
-      // Latest products: assumes higher IDs are newer.
-      result = [...result].sort((a, b) => b.id - a.id);
-    } else if (sortOption === "2") {
-      // Old products: assumes lower IDs are older.
-      result = [...result].sort((a, b) => a.id - b.id);
-    }
+  // Sorting
+  if (sortOption === "0") {
+    result = [...result].sort((a, b) => b.id - a.id);
+  } else if (sortOption === "2") {
+    result = [...result].sort((a, b) => a.id - b.id);
+  }
 
-    return result;
-  }, [products, selectedCategoryIds, sortOption]);
+  return result;
+}, [products, selectedCategoryIds, selectedPrice, sortOption]);
 
   // Pagination
   const totalPages = Math.max(
@@ -241,9 +301,9 @@ const ShopWithSidebar = () => {
   };
 
   // Reset pagination when filters or sorting change
-  useEffect(() => {
-    setPage(1);
-  }, [selectedCategoryIds, sortOption]);
+    useEffect(() => {
+      setPage(1);
+    }, [selectedCategoryIds, selectedPrice, sortOption]);
 
   return (
     <>
@@ -319,10 +379,20 @@ const ShopWithSidebar = () => {
                         )}
                       </div>
 
-                      <button
+                    <button
                         type="button"
-                        onClick={() => setSelectedCategoryIds([])}
-                        disabled={selectedCategoryIds.length === 0}
+                        onClick={() => {
+                          setSelectedCategoryIds([]);
+                          setSelectedPrice({
+                            from: priceBounds.min,
+                            to: priceBounds.max,
+                          });
+                        }}
+                        disabled={
+                          selectedCategoryIds.length === 0 &&
+                          selectedPrice?.from === priceBounds.min &&
+                          selectedPrice?.to === priceBounds.max
+                        }
                         className="text-sm text-blue transition-colors hover:text-blue-dark disabled:cursor-not-allowed disabled:text-gray-4"
                       >
                         Clean All
@@ -390,7 +460,17 @@ const ShopWithSidebar = () => {
                   )}
 
                   {/* Price Filter */}
-                  <PriceDropdown />
+                  <PriceDropdown 
+                    minPrice={priceBounds.min}
+                    maxPrice={priceBounds.max}
+                    value={
+                      selectedPrice ?? {
+                        from: priceBounds.min,
+                        to: priceBounds.max,
+                      }
+                    }
+                    onChange={setSelectedPrice}
+                  />
                 </div>
               </form>
             </div>
