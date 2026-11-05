@@ -19,6 +19,8 @@ import {
   toStoreItem,
 } from "@/lib/helper/productHelpers";
 
+import { useAddToCart } from "@/hooks/useAddToCart";
+
 const ProductItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
   const dispatch = useDispatch<AppDispatch>();
@@ -30,9 +32,10 @@ const ProductItem = ({ item }: { item: Product }) => {
     dispatch(updateQuickView({ ...storeItem }));
   };
 
-  const handleAddToCart = () => {
-    dispatch(addItemToCart({ ...storeItem, quantity: 1 }));
-  };
+
+const { handleAddToCart, isInCart } = useAddToCart();
+
+const added = isInCart(item.id);
 
   const handleItemToWishList = () => {
     dispatch(
@@ -92,12 +95,18 @@ const ProductItem = ({ item }: { item: Product }) => {
             </svg>
           </button>
 
-          <button
-            onClick={() => handleAddToCart()}
-            className="inline-flex font-medium text-custom-sm py-[7px] px-5 rounded-[5px] bg-blue text-white ease-out duration-200 hover:bg-blue-dark"
-          >
-            Add to cart
-          </button>
+    <button
+        type="button"
+        onClick={() => handleAddToCart(toStoreItem(item))}
+        disabled={added}
+        className={`inline-flex min-w-[140px] items-center justify-center rounded-md border border-gray-3 px-6 py-2.5 text-dark duration-200 ${
+          added
+            ? "cursor-not-allowed bg-green-600 text-white"
+            : "bg-gray-1 hover:border-blue hover:bg-blue hover:text-white"
+        }`}
+      >
+        {added ? "Added to Cart" : "Add to Cart"}
+      </button>
 
           <button
             onClick={() => handleItemToWishList()}

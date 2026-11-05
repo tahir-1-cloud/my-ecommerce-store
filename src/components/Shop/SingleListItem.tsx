@@ -18,6 +18,7 @@ import {
   isInStock,
   toStoreItem,
 } from "@/lib/helper/productHelpers";
+import { useAddToCart } from "@/hooks/useAddToCart";
 
 const SingleListItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
@@ -39,16 +40,10 @@ const SingleListItem = ({ item }: { item: Product }) => {
     openModal();
   };
 
-  const handleAddToCart = () => {
-    if (!inStock) return;
 
-    dispatch(
-      addItemToCart({
-        ...toStoreItem(item),
-        quantity: 1,
-      } as any)
-    );
-  };
+const { handleAddToCart, isInCart } = useAddToCart();
+
+const added = isInCart(item.id);
 
   const handleToggleWishlist = () => {
     dispatch(
@@ -116,14 +111,17 @@ const SingleListItem = ({ item }: { item: Product }) => {
             </button>
 
             {/* Add to Cart */}
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={!inStock}
-              className="inline-flex rounded-[5px] bg-blue px-5 py-[7px] text-custom-sm font-medium text-white duration-200 ease-out hover:bg-blue-dark disabled:cursor-not-allowed disabled:bg-gray-4"
-            >
-              {inStock ? "Add to cart" : "Sold out"}
-            </button>
+       <button
+          onClick={() => handleAddToCart(toStoreItem(item))}
+          disabled={added}
+          className={`inline-flex items-center justify-center w-full sm:w-44 h-11 rounded-md border text-sm font-medium whitespace-nowrap ease-out duration-200 ${
+            added
+              ? "bg-[#16a34a] text-white border-[#16a34a] cursor-default"
+              : "text-dark bg-gray-1 border-gray-3 hover:text-white hover:bg-blue hover:border-blue"
+          }`}
+        >
+          {added ? "✓ Added to Cart" : "Add to Cart"}
+        </button>
 
             {/* Wishlist */}
             <button

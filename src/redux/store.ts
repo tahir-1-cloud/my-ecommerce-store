@@ -1,3 +1,4 @@
+
 import {
   configureStore,
   type Middleware,
@@ -8,13 +9,16 @@ import cartReducer from "./features/cart-slice";
 import wishlistReducer from "./features/wishlist-slice";
 import productDetailsReducer from "./features/product-details";
 
-const WISHLIST_STORAGE_KEY = "guest-wishlist";
+export const WISHLIST_STORAGE_KEY = "guest-wishlist";
+export const CART_STORAGE_KEY = "guest-cart";
 
+// Wishlist Persistence
 const wishlistPersistenceMiddleware: Middleware =
   (storeAPI) => (next) => (action) => {
     const result = next(action);
 
     if (
+      typeof window !== "undefined" &&
       typeof action === "object" &&
       action !== null &&
       "type" in action &&
@@ -37,6 +41,35 @@ const wishlistPersistenceMiddleware: Middleware =
     return result;
   };
 
+// Cart Persistence
+const cartPersistenceMiddleware: Middleware =
+  (storeAPI) => (next) => (action) => {
+    const result = next(action);
+
+    if (
+      typeof window !== "undefined" &&
+      typeof action === "object" &&
+      action !== null &&
+      "type" in action &&
+      typeof action.type === "string" &&
+      action.type.startsWith("cart/") &&
+      action.type !== "cart/setCartItems"
+    ) {
+      try {
+        const cartItems = storeAPI.getState().cartReducer.items;
+
+        localStorage.setItem(
+          CART_STORAGE_KEY,
+          JSON.stringify(cartItems)
+        );
+      } catch (error) {
+        console.error("Unable to save cart:", error);
+      }
+    }
+
+    return result;
+  };
+
 export const store = configureStore({
   reducer: {
     quickViewReducer,
@@ -45,7 +78,10 @@ export const store = configureStore({
     productDetailsReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(wishlistPersistenceMiddleware),
+    getDefaultMiddleware().concat(
+      wishlistPersistenceMiddleware,
+      cartPersistenceMiddleware
+    ),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
@@ -59,5 +95,3 @@ import {
 
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 export const useAppDispatch = () => useDispatch<AppDispatch>();
-
-export { WISHLIST_STORAGE_KEY };

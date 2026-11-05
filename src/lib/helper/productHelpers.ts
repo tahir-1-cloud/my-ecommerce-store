@@ -47,6 +47,7 @@ export const toStoreItem = (item: Product) => {
     title: item.name,
     price: oldPrice ?? price ?? 0,
     discountedPrice: price ?? 0,
+    quantity: 1, // Add this line
     reviews: 0,
     imgs: {
       thumbnails: image ? [image] : [],

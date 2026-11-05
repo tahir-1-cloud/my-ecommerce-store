@@ -16,6 +16,8 @@ import { productService } from "@/services/productService";
 import type { Category } from "@/types/category";
 import type { Product } from "@/types/product";
 
+import { useAddToCart } from "@/hooks/useAddToCart";
+
 const PAGE_SIZE = 9;
 
 type SortOption = "0" | "1" | "2";

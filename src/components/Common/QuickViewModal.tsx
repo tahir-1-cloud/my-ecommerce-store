@@ -9,8 +9,9 @@ import Image from "next/image";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { resetQuickView } from "@/redux/features/quickView-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
+import { useAddToCart } from "@/hooks/useAddToCart";
 
-const QuickViewModal = () => {
+const QuickViewModal = (item) => {
   const { isModalOpen, closeModal } = useModalContext();
   const { openPreviewModal } = usePreviewSlider();
   const [quantity, setQuantity] = useState(1);
@@ -30,16 +31,11 @@ const QuickViewModal = () => {
   };
 
   // add to cart
-  const handleAddToCart = () => {
-    dispatch(
-      addItemToCart({
-        ...product,
-        quantity,
-      })
-    );
 
-    closeModal();
-  };
+
+const { handleAddToCart, isInCart } = useAddToCart();
+
+const added = isInCart(item.id);
 
   useEffect(() => {
     // closing modal while clicking outside
