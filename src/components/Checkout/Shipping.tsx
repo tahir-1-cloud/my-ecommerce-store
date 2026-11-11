@@ -1,138 +1,229 @@
-import React, { useState } from "react";
+"use client";
 
-const Shipping = () => {
-  const [dropdown, setDropdown] = useState(false);
+import React from "react";
+import type { AddressForm } from "./Billing";
+
+interface ShippingProps {
+  value: AddressForm;
+  onChange: (value: AddressForm) => void;
+  isGuest: boolean;
+  guestPassword: string;
+  onGuestPasswordChange: (value: string) => void;
+}
+
+const inputClass =
+  "h-12 w-full rounded-lg border border-[#CBD2E0] bg-white px-4 text-base text-dark outline-none duration-200 placeholder:text-[#8A94A6] hover:border-[#9AA5BC] focus:border-blue focus:ring-4 focus:ring-[#DDE3FB]";
+
+const labelClass = "mb-2 block text-sm font-semibold text-dark";
+
+const Req = () => <span className="ml-0.5 text-red">*</span>;
+
+const Shipping = ({
+  value,
+  onChange,
+  isGuest,
+  guestPassword,
+  onGuestPasswordChange,
+}: ShippingProps) => {
+  const updateField = (field: keyof AddressForm, fieldValue: string) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
 
   return (
-    <div className="bg-white shadow-1 rounded-[10px] mt-7.5">
-      <div
-        onClick={() => setDropdown(!dropdown)}
-        className="cursor-pointer flex items-center gap-2.5 font-medium text-lg text-dark py-5 px-5.5"
-      >
-        Ship to a different address?
-        <svg
-          className={`fill-current ease-out duration-200 ${
-            dropdown && "rotate-180"
-          }`}
-          width="22"
-          height="22"
-          viewBox="0 0 22 22"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M4.06103 7.80259C4.30813 7.51431 4.74215 7.48092 5.03044 7.72802L10.9997 12.8445L16.9689 7.72802C17.2572 7.48092 17.6912 7.51431 17.9383 7.80259C18.1854 8.09088 18.1521 8.5249 17.8638 8.772L11.4471 14.272C11.1896 14.4927 10.8097 14.4927 10.5523 14.272L4.1356 8.772C3.84731 8.5249 3.81393 8.09088 4.06103 7.80259Z"
-            fill=""
-          />
-        </svg>
+    <div className="mt-6 overflow-hidden rounded-xl border border-gray-3 bg-white shadow-1 sm:mt-7.5">
+      <div className="flex items-center gap-3.5 border-b border-gray-3 bg-[#F8F9FC] px-4 py-4 sm:gap-4 sm:px-8 sm:py-5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue text-base font-bold text-white">
+          1
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold text-dark sm:text-xl">
+            Shipping details
+          </h3>
+          <p className="text-sm text-[#4B5563]">
+            Where should we deliver your order?
+          </p>
+        </div>
       </div>
 
-      {/* <!-- dropdown menu --> */}
-      <div className={`p-4 sm:p-8.5 ${dropdown ? "block" : "hidden"}`}>
-        <div className="mb-5">
-          <label htmlFor="countryName" className="block mb-2.5">
-            Country/ Region
-            <span className="text-red">*</span>
-          </label>
+      <div className="p-4 sm:p-8">
+        {/* Contact */}
+        <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="shippingEmail" className={labelClass}>
+              Email Address <Req />
+            </label>
+            <input
+              id="shippingEmail"
+              type="email"
+              autoComplete="email"
+              value={value.email}
+              onChange={(e) => updateField("email", e.target.value)}
+              placeholder="you@example.com"
+              className={inputClass}
+            />
+          </div>
 
-          <div className="relative">
-            <select className="w-full bg-gray-1 rounded-md border border-gray-3 text-dark-4 py-3 pl-5 pr-9 duration-200 appearance-none outline-none focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20">
-              <option value="0">Australia</option>
-              <option value="1">America</option>
-              <option value="2">England</option>
-            </select>
-
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-4">
-              <svg
-                className="fill-current"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M2.41469 5.03569L2.41467 5.03571L2.41749 5.03846L7.76749 10.2635L8.0015 10.492L8.23442 10.2623L13.5844 4.98735L13.5844 4.98735L13.5861 4.98569C13.6809 4.89086 13.8199 4.89087 13.9147 4.98569C14.0092 5.08024 14.0095 5.21864 13.9155 5.31345C13.9152 5.31373 13.915 5.31401 13.9147 5.31429L8.16676 10.9622L8.16676 10.9622L8.16469 10.9643C8.06838 11.0606 8.02352 11.0667 8.00039 11.0667C7.94147 11.0667 7.89042 11.0522 7.82064 10.9991L2.08526 5.36345C1.99127 5.26865 1.99154 5.13024 2.08609 5.03569C2.18092 4.94086 2.31986 4.94086 2.41469 5.03569Z"
-                  fill=""
-                  stroke=""
-                  strokeWidth="0.666667"
-                />
-              </svg>
-            </span>
+          <div>
+            <label htmlFor="shippingPhone" className={labelClass}>
+              Phone <Req />
+            </label>
+            <input
+              id="shippingPhone"
+              type="tel"
+              autoComplete="tel"
+              value={value.phoneNumber}
+              onChange={(e) => updateField("phoneNumber", e.target.value)}
+              placeholder="03XX XXXXXXX"
+              className={inputClass}
+            />
           </div>
         </div>
 
-        <div className="mb-5">
-          <label htmlFor="address" className="block mb-2.5">
-            Street Address
-            <span className="text-red">*</span>
-          </label>
-
-          <input
-            type="text"
-            name="address"
-            placeholder="House number and street name"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-
-          <div className="mt-5">
+        {isGuest && (
+          <div className="mb-5 rounded-lg border border-[#C9D2F8] bg-[#EEF1FD] p-4">
+            <label htmlFor="guestPassword" className={labelClass}>
+              Create Account Password <Req />
+            </label>
             <input
-              type="text"
-              name="address"
-              placeholder="Apartment, suite, unit, etc. (optional)"
-              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+              id="guestPassword"
+              type="password"
+              autoComplete="new-password"
+              value={guestPassword}
+              onChange={(e) => onGuestPasswordChange(e.target.value)}
+              placeholder="Minimum 6 characters"
+              minLength={6}
+              className={inputClass}
+            />
+            <p className="mt-2 text-sm text-[#374151]">
+              An account will be created automatically when you place your
+              order.
+            </p>
+          </div>
+        )}
+
+        <div className="mb-5 border-t border-gray-3" />
+
+        {/* Name */}
+        <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <label htmlFor="shippingFirstName" className={labelClass}>
+              First Name <Req />
+            </label>
+            <input
+              id="shippingFirstName"
+              autoComplete="given-name"
+              value={value.firstName}
+              onChange={(e) => updateField("firstName", e.target.value)}
+              placeholder="John"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="shippingLastName" className={labelClass}>
+              Last Name <Req />
+            </label>
+            <input
+              id="shippingLastName"
+              autoComplete="family-name"
+              value={value.lastName}
+              onChange={(e) => updateField("lastName", e.target.value)}
+              placeholder="Doe"
+              className={inputClass}
             />
           </div>
         </div>
 
         <div className="mb-5">
-          <label htmlFor="town" className="block mb-2.5">
-            Town/ City <span className="text-red">*</span>
+          <label htmlFor="shippingCompany" className={labelClass}>
+            Company Name{" "}
+            <span className="font-normal text-[#6B7280]">(optional)</span>
           </label>
-
           <input
-            type="text"
-            name="town"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+            id="shippingCompany"
+            autoComplete="organization"
+            value={value.companyName}
+            onChange={(e) => updateField("companyName", e.target.value)}
+            className={inputClass}
           />
         </div>
 
         <div className="mb-5">
-          <label htmlFor="country" className="block mb-2.5">
-            Country
+          <label htmlFor="shippingCountry" className={labelClass}>
+            Country / Region <Req />
           </label>
-
           <input
-            type="text"
-            name="country"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+            id="shippingCountry"
+            autoComplete="country-name"
+            value={value.country}
+            onChange={(e) => updateField("country", e.target.value)}
+            placeholder="Pakistan"
+            className={inputClass}
           />
         </div>
 
         <div className="mb-5">
-          <label htmlFor="phone" className="block mb-2.5">
-            Phone <span className="text-red">*</span>
+          <label htmlFor="shippingAddress" className={labelClass}>
+            Street Address <Req />
           </label>
+          <input
+            id="shippingAddress"
+            autoComplete="address-line1"
+            value={value.addressLine1}
+            onChange={(e) => updateField("addressLine1", e.target.value)}
+            placeholder="House number and street name"
+            className={inputClass}
+          />
 
           <input
-            type="text"
-            name="phone"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+            aria-label="Address line 2"
+            autoComplete="address-line2"
+            value={value.addressLine2}
+            onChange={(e) => updateField("addressLine2", e.target.value)}
+            placeholder="Apartment, suite, unit, etc. (optional)"
+            className={`${inputClass} mt-3`}
           />
         </div>
 
-        <div>
-          <label htmlFor="email" className="block mb-2.5">
-            Email Address <span className="text-red">*</span>
-          </label>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          <div>
+            <label htmlFor="shippingCity" className={labelClass}>
+              Town / City <Req />
+            </label>
+            <input
+              id="shippingCity"
+              autoComplete="address-level2"
+              value={value.city}
+              onChange={(e) => updateField("city", e.target.value)}
+              className={inputClass}
+            />
+          </div>
 
-          <input
-            type="email"
-            name="email"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
+          <div>
+            <label htmlFor="shippingState" className={labelClass}>
+              State / Province
+            </label>
+            <input
+              id="shippingState"
+              autoComplete="address-level1"
+              value={value.state}
+              onChange={(e) => updateField("state", e.target.value)}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="shippingPostalCode" className={labelClass}>
+              Postal Code
+            </label>
+            <input
+              id="shippingPostalCode"
+              autoComplete="postal-code"
+              value={value.postalCode}
+              onChange={(e) => updateField("postalCode", e.target.value)}
+              className={inputClass}
+            />
+          </div>
         </div>
       </div>
     </div>

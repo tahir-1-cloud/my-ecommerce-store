@@ -1,207 +1,254 @@
+"use client";
+
 import React from "react";
 
-const Billing = () => {
+export interface AddressForm {
+  firstName: string;
+  lastName: string;
+  companyName: string;
+  country: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  phoneNumber: string;
+  email: string;
+}
+
+export interface CheckoutFormValues {
+  billing: AddressForm;
+  shipping: AddressForm;
+  guestPassword: string;
+  useDifferentShippingAddress: boolean;
+  saveAddress: boolean;
+}
+
+interface BillingProps {
+  value: AddressForm;
+  onChange: (value: AddressForm) => void;
+  sameAsShipping: boolean;
+  onSameAsShippingChange: (value: boolean) => void;
+}
+
+const inputClass =
+  "h-12 w-full rounded-lg border border-[#CBD2E0] bg-white px-4 text-base text-dark outline-none duration-200 placeholder:text-[#8A94A6] hover:border-[#9AA5BC] focus:border-blue focus:ring-4 focus:ring-[#DDE3FB]";
+
+const labelClass = "mb-2 block text-sm font-semibold text-dark";
+
+const Req = () => <span className="ml-0.5 text-red">*</span>;
+
+const RadioOption = ({
+  checked,
+  onSelect,
+  title,
+  description,
+}: {
+  checked: boolean;
+  onSelect: () => void;
+  title: string;
+  description: string;
+}) => (
+  <label
+    className={`flex cursor-pointer items-start gap-3.5 rounded-lg border-2 p-4 duration-200 ease-out ${
+      checked
+        ? "border-blue bg-[#EEF1FD]"
+        : "border-gray-3 bg-white hover:border-[#9AA5BC]"
+    }`}
+  >
+    <input
+      type="radio"
+      name="billingOption"
+      checked={checked}
+      onChange={onSelect}
+      className="sr-only"
+    />
+    <span
+      aria-hidden="true"
+      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white ${
+        checked ? "border-blue" : "border-[#9AA5BC]"
+      }`}
+    >
+      {checked && <span className="h-2.5 w-2.5 rounded-full bg-blue" />}
+    </span>
+    <span className="min-w-0">
+      <span className="block font-semibold text-dark">{title}</span>
+      <span className="block text-sm text-[#4B5563]">{description}</span>
+    </span>
+  </label>
+);
+
+const Billing = ({
+  value,
+  onChange,
+  sameAsShipping,
+  onSameAsShippingChange,
+}: BillingProps) => {
+  const updateField = (field: keyof AddressForm, fieldValue: string) => {
+    onChange({ ...value, [field]: fieldValue });
+  };
+
   return (
-    <div className="mt-9">
-      <h2 className="font-medium text-dark text-xl sm:text-2xl mb-5.5">
-        Billing details
-      </h2>
-
-      <div className="bg-white shadow-1 rounded-[10px] p-4 sm:p-8.5">
-        <div className="flex flex-col lg:flex-row gap-5 sm:gap-8 mb-5">
-          <div className="w-full">
-            <label htmlFor="firstName" className="block mb-2.5">
-              First Name <span className="text-red">*</span>
-            </label>
-
-            <input
-              type="text"
-              name="firstName"
-              id="firstName"
-              placeholder="Jhon"
-              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-            />
-          </div>
-
-          <div className="w-full">
-            <label htmlFor="lastName" className="block mb-2.5">
-              Last Name <span className="text-red">*</span>
-            </label>
-
-            <input
-              type="text"
-              name="lastName"
-              id="lastName"
-              placeholder="Deo"
-              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-            />
-          </div>
+    <div className="mt-6 overflow-hidden rounded-xl border border-gray-3 bg-white shadow-1 sm:mt-7.5">
+      <div className="flex items-center gap-3.5 border-b border-gray-3 bg-[#F8F9FC] px-4 py-4 sm:gap-4 sm:px-8 sm:py-5">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue text-base font-bold text-white">
+          2
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold text-dark sm:text-xl">
+            Billing details
+          </h3>
+          <p className="text-sm text-[#4B5563]">
+            Choose how you&apos;d like to be billed.
+          </p>
         </div>
+      </div>
 
-        <div className="mb-5">
-          <label htmlFor="companyName" className="block mb-2.5">
-            Company Name
-          </label>
-
-          <input
-            type="text"
-            name="companyName"
-            id="companyName"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+      <div className="p-4 sm:p-8">
+        <div className="flex flex-col gap-3">
+          <RadioOption
+            checked={sameAsShipping}
+            onSelect={() => onSameAsShippingChange(true)}
+            title="Same as shipping address"
+            description="Use the shipping address for billing too."
+          />
+          <RadioOption
+            checked={!sameAsShipping}
+            onSelect={() => onSameAsShippingChange(false)}
+            title="Use a different billing address"
+            description="Enter a separate address for billing."
           />
         </div>
 
-        <div className="mb-5">
-          <label htmlFor="countryName" className="block mb-2.5">
-            Country/ Region
-            <span className="text-red">*</span>
-          </label>
-
-          <div className="relative">
-            <select className="w-full bg-gray-1 rounded-md border border-gray-3 text-dark-4 py-3 pl-5 pr-9 duration-200 appearance-none outline-none focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20">
-              <option value="0">Australia</option>
-              <option value="1">America</option>
-              <option value="2">England</option>
-            </select>
-
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-dark-4">
-              <svg
-                className="fill-current"
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M2.41469 5.03569L2.41467 5.03571L2.41749 5.03846L7.76749 10.2635L8.0015 10.492L8.23442 10.2623L13.5844 4.98735L13.5844 4.98735L13.5861 4.98569C13.6809 4.89086 13.8199 4.89087 13.9147 4.98569C14.0092 5.08024 14.0095 5.21864 13.9155 5.31345C13.9152 5.31373 13.915 5.31401 13.9147 5.31429L8.16676 10.9622L8.16676 10.9622L8.16469 10.9643C8.06838 11.0606 8.02352 11.0667 8.00039 11.0667C7.94147 11.0667 7.89042 11.0522 7.82064 10.9991L2.08526 5.36345C1.99127 5.26865 1.99154 5.13024 2.08609 5.03569C2.18092 4.94086 2.31986 4.94086 2.41469 5.03569Z"
-                  fill=""
-                  stroke=""
-                  strokeWidth="0.666667"
+        {!sameAsShipping && (
+          <div className="mt-6 border-t border-gray-3 pt-6">
+            <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <div>
+                <label htmlFor="firstName" className={labelClass}>
+                  First Name <Req />
+                </label>
+                <input
+                  id="firstName"
+                  value={value.firstName}
+                  onChange={(e) => updateField("firstName", e.target.value)}
+                  placeholder="John"
+                  className={inputClass}
                 />
-              </svg>
-            </span>
-          </div>
-        </div>
+              </div>
 
-        <div className="mb-5">
-          <label htmlFor="address" className="block mb-2.5">
-            Street Address
-            <span className="text-red">*</span>
-          </label>
-
-          <input
-            type="text"
-            name="address"
-            id="address"
-            placeholder="House number and street name"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-
-          <div className="mt-5">
-            <input
-              type="text"
-              name="address"
-              id="addressTwo"
-              placeholder="Apartment, suite, unit, etc. (optional)"
-              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-            />
-          </div>
-        </div>
-
-        <div className="mb-5">
-          <label htmlFor="town" className="block mb-2.5">
-            Town/ City <span className="text-red">*</span>
-          </label>
-
-          <input
-            type="text"
-            name="town"
-            id="town"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-        </div>
-
-        <div className="mb-5">
-          <label htmlFor="country" className="block mb-2.5">
-            Country
-          </label>
-
-          <input
-            type="text"
-            name="country"
-            id="country"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-        </div>
-
-        <div className="mb-5">
-          <label htmlFor="phone" className="block mb-2.5">
-            Phone <span className="text-red">*</span>
-          </label>
-
-          <input
-            type="text"
-            name="phone"
-            id="phone"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-        </div>
-
-        <div className="mb-5.5">
-          <label htmlFor="email" className="block mb-2.5">
-            Email Address <span className="text-red">*</span>
-          </label>
-
-          <input
-            type="email"
-            name="email"
-            id="email"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="checkboxLabelTwo"
-            className="text-dark flex cursor-pointer select-none items-center"
-          >
-            <div className="relative">
-              <input
-                type="checkbox"
-                id="checkboxLabelTwo"
-                className="sr-only"
-              />
-              <div className="mr-2 flex h-4 w-4 items-center justify-center rounded border border-gray-4">
-                <span className="opacity-0">
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <rect
-                      x="4"
-                      y="4.00006"
-                      width="16"
-                      height="16"
-                      rx="4"
-                      fill="#3C50E0"
-                    />
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M16.3103 9.25104C16.471 9.41178 16.5612 9.62978 16.5612 9.85707C16.5612 10.0844 16.471 10.3024 16.3103 10.4631L12.0243 14.7491C11.8635 14.9098 11.6455 15.0001 11.4182 15.0001C11.191 15.0001 10.973 14.9098 10.8122 14.7491L8.24062 12.1775C8.08448 12.0158 7.99808 11.7993 8.00003 11.5745C8.00199 11.3498 8.09214 11.1348 8.25107 10.9759C8.41 10.8169 8.62499 10.7268 8.84975 10.7248C9.0745 10.7229 9.29103 10.8093 9.4527 10.9654L11.4182 12.931L15.0982 9.25104C15.2589 9.09034 15.4769 9.00006 15.7042 9.00006C15.9315 9.00006 16.1495 9.09034 16.3103 9.25104Z"
-                      fill="white"
-                    />
-                  </svg>
-                </span>
+              <div>
+                <label htmlFor="lastName" className={labelClass}>
+                  Last Name <Req />
+                </label>
+                <input
+                  id="lastName"
+                  value={value.lastName}
+                  onChange={(e) => updateField("lastName", e.target.value)}
+                  placeholder="Doe"
+                  className={inputClass}
+                />
               </div>
             </div>
-            Create an Account
-          </label>
-        </div>
+
+            <div className="mb-5">
+              <label htmlFor="companyName" className={labelClass}>
+                Company Name{" "}
+                <span className="font-normal text-[#6B7280]">(optional)</span>
+              </label>
+              <input
+                id="companyName"
+                value={value.companyName}
+                onChange={(e) => updateField("companyName", e.target.value)}
+                className={inputClass}
+              />
+            </div>
+
+            <div className="mb-5">
+              <label htmlFor="billingCountry" className={labelClass}>
+                Country / Region <Req />
+              </label>
+              <input
+                id="billingCountry"
+                value={value.country}
+                onChange={(e) => updateField("country", e.target.value)}
+                placeholder="Pakistan"
+                className={inputClass}
+              />
+            </div>
+
+            <div className="mb-5">
+              <label htmlFor="billingAddress" className={labelClass}>
+                Street Address <Req />
+              </label>
+              <input
+                id="billingAddress"
+                value={value.addressLine1}
+                onChange={(e) => updateField("addressLine1", e.target.value)}
+                placeholder="House number and street name"
+                className={inputClass}
+              />
+
+              <input
+                aria-label="Address line 2"
+                value={value.addressLine2}
+                onChange={(e) => updateField("addressLine2", e.target.value)}
+                placeholder="Apartment, suite, unit, etc. (optional)"
+                className={`${inputClass} mt-3`}
+              />
+            </div>
+
+            <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+              <div>
+                <label htmlFor="billingCity" className={labelClass}>
+                  Town / City <Req />
+                </label>
+                <input
+                  id="billingCity"
+                  value={value.city}
+                  onChange={(e) => updateField("city", e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="billingState" className={labelClass}>
+                  State / Province
+                </label>
+                <input
+                  id="billingState"
+                  value={value.state}
+                  onChange={(e) => updateField("state", e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="billingPostalCode" className={labelClass}>
+                  Postal Code
+                </label>
+                <input
+                  id="billingPostalCode"
+                  value={value.postalCode}
+                  onChange={(e) => updateField("postalCode", e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="billingPhone" className={labelClass}>
+                Phone <Req />
+              </label>
+              <input
+                id="billingPhone"
+                type="tel"
+                value={value.phoneNumber}
+                onChange={(e) => updateField("phoneNumber", e.target.value)}
+                className={inputClass}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

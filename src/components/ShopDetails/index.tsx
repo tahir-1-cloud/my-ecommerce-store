@@ -9,8 +9,17 @@ import RecentlyViewdItems from "./RecentlyViewd";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { productService } from "@/services/productService";
 import type { Product } from "@/types/product";
+import { useAppDispatch } from "@/redux/store";
+import { addRecentlyViewed } from "@/redux/features/recently-viewed-slice";
+import { useRouter } from "next/navigation";
+import { useAddToCart } from "@/hooks/useAddToCart";
 
 const ShopDetails = () => {
+
+  const router = useRouter();
+
+  const { handleAddToCart, isInCart } = useAddToCart();
+  const dispatch = useAppDispatch();
   const { openPreviewModal } = usePreviewSlider();
 
   const [product, setProduct] = useState<Product | null>(null);
@@ -31,7 +40,11 @@ const ShopDetails = () => {
       try {
         const productId = new URLSearchParams(window.location.search).get("id");
 
-        if (!productId || !Number.isInteger(Number(productId)) || Number(productId) <= 0) {
+        if (
+          !productId ||
+          !Number.isInteger(Number(productId)) ||
+          Number(productId) <= 0
+        ) {
           throw new Error("Invalid product ID.");
         }
 
@@ -84,6 +97,39 @@ const ShopDetails = () => {
     [product?.images]
   );
 
+  // Add product to Recently Viewed after successful API loading.
+  useEffect(() => {
+    if (!product) return;
+
+    const defaultVariant =
+      product.variants?.find((variant) => variant.isActive) ??
+      product.variants?.[0];
+
+    const currentPrice = defaultVariant?.price ?? 0;
+
+    const originalPrice =
+      defaultVariant?.compareAtPrice != null &&
+      defaultVariant.compareAtPrice > currentPrice
+        ? defaultVariant.compareAtPrice
+        : currentPrice;
+
+    const productImages = images.map((image) => image.imageUrl);
+
+    dispatch(
+      addRecentlyViewed({
+        id: product.id,
+        title: product.name,
+        price: originalPrice,
+        discountedPrice: currentPrice,
+        quantity: 1,
+        imgs: {
+          thumbnails: productImages,
+          previews: productImages,
+        },
+      })
+    );
+  }, [dispatch, product, images]);
+
   const selectedVariant = useMemo(
     () =>
       product?.variants?.find(
@@ -113,6 +159,26 @@ const ShopDetails = () => {
 
   const inStock = (selectedVariant?.stockQuantity ?? 0) > 0;
 
+  const alreadyInCart = product
+    ? isInCart(product.id)
+    : false;
+
+  const totalPrice = price * quantity;
+
+const cartItem = product
+  ? {
+      id: product.id,
+      title: product.name,
+      price: hasDiscount ? compareAtPrice! : price,
+      discountedPrice: price,
+      quantity,
+      imgs: {
+        thumbnails: images.map((image) => image.imageUrl),
+        previews: images.map((image) => image.imageUrl),
+      },
+    }
+  : null;
+
   const tabs = [
     { id: "tabOne", title: "Description" },
     { id: "tabTwo", title: "Additional Information" },
@@ -122,6 +188,31 @@ const ShopDetails = () => {
   const handlePreviewSlider = () => {
     openPreviewModal();
   };
+
+
+// Add product to cart.
+const handleAdd = () => {
+  if (!product || !selectedVariant || !selectedVariant.isActive) return;
+
+  if (!inStock || quantity < 1 || quantity > selectedVariant.stockQuantity) {
+    return;
+  }
+
+  handleAddToCart(cartItem);
+};
+
+// Add product to cart and proceed to checkout.
+const handleProceedToCheckout = () => {
+  if (!product || !selectedVariant || !selectedVariant.isActive) return;
+
+  if (!inStock || quantity < 1 || quantity > selectedVariant.stockQuantity) {
+    return;
+  }
+
+  router.push(
+    `/checkout?mode=buy-now&productId=${product.id}&variantId=${selectedVariant.id}&quantity=${quantity}`
+  );
+};
 
   if (loading) {
     return (
@@ -414,13 +505,44 @@ const ShopDetails = () => {
                     </button>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={!inStock || !selectedVariant}
-                    className="inline-flex rounded-md bg-blue px-7 py-3 font-medium text-white duration-200 ease-out hover:bg-blue-dark disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Purchase Now
-                  </button>
+           <div className="flex flex-wrap items-center gap-3">
+       
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={
+                !inStock ||
+                !selectedVariant ||
+                !selectedVariant.isActive ||
+                alreadyInCart ||
+                quantity < 1 ||
+                quantity > (selectedVariant?.stockQuantity ?? 0)
+              }
+              className={`inline-flex items-center justify-center w-full sm:w-44 h-11 rounded-md border text-sm font-medium whitespace-nowrap ease-out duration-200 ${
+                alreadyInCart
+                  ? "bg-[#16a34a] text-white border-[#16a34a] cursor-default"
+                  : "text-dark bg-gray-1 border-gray-3 hover:text-white hover:bg-blue hover:border-blue disabled:cursor-not-allowed disabled:opacity-50"
+              }`}
+            >
+              {alreadyInCart ? "✓ Added to Cart" : "Add to Cart"}
+            </button>
+
+
+              <button
+                type="button"
+                onClick={handleProceedToCheckout}
+                disabled={
+                  !inStock ||
+                  !selectedVariant ||
+                  !selectedVariant.isActive ||
+                  quantity < 1 ||
+                  quantity > (selectedVariant?.stockQuantity ?? 0)
+                }
+                className="inline-flex rounded-md bg-dark px-6 py-3 font-medium text-white duration-200 ease-out hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Buy Now
+              </button>
+            </div>
                 </div>
               </form>
             </div>

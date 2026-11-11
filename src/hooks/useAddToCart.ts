@@ -31,7 +31,7 @@ export const useAddToCart = () => {
     dispatch(
       addItemToCart({
         ...item,
-        quantity: 1,
+        quantity: Math.max(1, item.quantity || 1),
       })
     );
 

@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { store } from "./store";
 import WishlistHydration from "@/components/Common/WishlistHydration";
 import CartHydration from "@/components/Common/CartHydration";
+import RecentlyViewedHydration from "@/components/RecentlyViewed/RecentlyViewedHydration";
 interface ReduxProviderProps {
   children: React.ReactNode;
 }
@@ -13,6 +14,7 @@ export function ReduxProvider({ children }: ReduxProviderProps) {
     <Provider store={store}>
       <WishlistHydration />
       <CartHydration />
+      <RecentlyViewedHydration />
       {children}
     </Provider>
   );

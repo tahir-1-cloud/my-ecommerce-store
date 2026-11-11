@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import type { Category } from "@/types/category";
-
+import Link from "next/link";
 type SingleItemProps = {
   item: Category;
   index?: number;
@@ -21,7 +21,7 @@ const SingleItem = ({ item, index = 0, visible = true }: SingleItemProps) => {
         transitionDelay: visible ? `${Math.min(index, 8) * 90}ms` : "0ms",
       }}
     >
-      <a
+      <Link 
         href={`/shop-with-sidebar?category=${item.id}`}
         className="group flex flex-col items-center"
       >
@@ -52,7 +52,7 @@ const SingleItem = ({ item, index = 0, visible = true }: SingleItemProps) => {
             {item.name}
           </h3>
         </div>
-      </a>
+      </Link>
     </div>
   );
 };
