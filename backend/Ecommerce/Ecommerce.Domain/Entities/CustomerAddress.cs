@@ -1,4 +1,5 @@
 ﻿using Ecommerce.Domain.Common;
+using Ecommerce.Domain.Enum;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,5 +29,8 @@ namespace Ecommerce.Domain.Entities
         public string Country { get; set; } = string.Empty;
 
         public bool IsDefault { get; set; }
+
+        public AddressType Type { get; set; } // Shipping / Billing
+
     }
 }

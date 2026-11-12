@@ -7,17 +7,34 @@ import type {
   RefreshTokenRequest,
 } from "@/types/auth";
 
-interface ApiResponse<T> {
-  status: boolean;
-  message?: string;
-  data: T;
+const endpoint = "auth";
+
+export function saveAuthSession(response: AuthResponse) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.setItem("accessToken", response.accessToken);
+  localStorage.setItem("refreshToken", response.refreshToken);
+  localStorage.setItem("accessTokenExpiresAt", response.accessTokenExpiresAt);
+  localStorage.setItem("user", JSON.stringify(response.user));
 }
 
-const endpoint = "auth";
+export function clearAuthSession() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("token");
+  localStorage.removeItem("accessTokenExpiresAt");
+  localStorage.removeItem("user");
+}
 
 export const authService = {
   login: async (data: LoginRequest) => {
-    const response = await apiRequest<ApiResponse<AuthResponse>>(
+    const response = await apiRequest<AuthResponse>(
       `${endpoint}/login`,
       {
         method: "POST",
@@ -25,11 +42,12 @@ export const authService = {
       }
     );
 
-    return response.data;
+    saveAuthSession(response);
+    return response;
   },
 
   register: async (data: RegisterRequest) => {
-    const response = await apiRequest<ApiResponse<AuthResponse>>(
+    const response = await apiRequest<AuthResponse>(
       `${endpoint}/register`,
       {
         method: "POST",
@@ -37,11 +55,12 @@ export const authService = {
       }
     );
 
-    return response.data;
+    saveAuthSession(response);
+    return response;
   },
 
   refreshToken: async (data: RefreshTokenRequest) => {
-    const response = await apiRequest<ApiResponse<AuthResponse>>(
+    const response = await apiRequest<AuthResponse>(
       `${endpoint}/refresh-token`,
       {
         method: "POST",
@@ -49,12 +68,17 @@ export const authService = {
       }
     );
 
-    return response.data;
+    saveAuthSession(response);
+    return response;
   },
 
   logout: async () => {
-    await apiRequest<void>(`${endpoint}/logout`, {
-      method: "POST",
-    });
+    try {
+      await apiRequest<void>(`${endpoint}/logout`, {
+        method: "POST",
+      });
+    } finally {
+      clearAuthSession();
+    }
   },
 };

@@ -14,11 +14,12 @@ export async function apiRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers = new Headers(options.headers);
+
   const isFormData =
     typeof FormData !== "undefined" &&
     options.body instanceof FormData;
 
-  // FormData: browser sets multipart/form-data with boundary.
+  // FormData: browser automatically sets multipart boundary.
   // JSON requests: set application/json when a body exists.
   if (isFormData) {
     headers.delete("Content-Type");
@@ -26,13 +27,13 @@ export async function apiRequest<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  // Supports common JWT storage keys.
-  if (typeof window !== "undefined") {
+  // Automatically attach access token to authenticated requests.
+  if (typeof window !== "undefined" && !headers.has("Authorization")) {
     const token =
       localStorage.getItem("accessToken") ??
       localStorage.getItem("token");
 
-    if (token && !headers.has("Authorization")) {
+    if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
   }
@@ -56,6 +57,18 @@ export async function apiRequest<T>(
     );
   }
 
+  // Handle 204 No Content without attempting JSON parsing.
+  if (response.status === 204) {
+    if (!response.ok) {
+      throw new ApiError(
+        `Request failed (${response.status}).`,
+        response.status
+      );
+    }
+
+    return undefined as T;
+  }
+
   const responseText = await response.text();
 
   let body: unknown;
@@ -77,13 +90,15 @@ export async function apiRequest<T>(
         ? errorBody.message
         : typeof errorBody.title === "string"
           ? errorBody.title
-          : typeof errorBody.error === "string"
-            ? errorBody.error
-            : response.status === 401
-              ? "Please sign in to continue."
-              : response.status === 403
-                ? "You do not have permission to perform this action."
-                : `Request failed (${response.status}).`;
+          : typeof errorBody.detail === "string"
+            ? errorBody.detail
+            : typeof errorBody.error === "string"
+              ? errorBody.error
+              : response.status === 401
+                ? "Please sign in to continue."
+                : response.status === 403
+                  ? "You do not have permission to perform this action."
+                  : `Request failed (${response.status}).`;
 
     throw new ApiError(
       message,

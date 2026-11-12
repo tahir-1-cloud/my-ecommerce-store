@@ -61,12 +61,12 @@ export const menuData: Menu[] = [
         newTab: false,
         path: "/signin",
       },
-      {
-        id: 68,
-        title: "Sign up",
-        newTab: false,
-        path: "/signup",
-      },
+      // {
+      //   id: 68,
+      //   title: "Sign up",
+      //   newTab: false,
+      //   path: "/signup",
+      // },
       {
         id: 69,
         title: "My Account",

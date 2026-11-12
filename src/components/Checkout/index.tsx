@@ -12,6 +12,7 @@ import Coupon from "./Coupon";
 import Billing, { type AddressForm } from "./Billing";
 
 import { checkoutService } from "@/services/checkoutService";
+import { saveAuthSession } from "@/services/authService";
 import type {
   CheckoutMode,
   CheckoutResponse,
@@ -216,11 +217,7 @@ const Checkout = () => {
 
       // Save guest authentication tokens returned by backend
       if (result.authentication) {
-        localStorage.setItem("accessToken", result.authentication.accessToken);
-        localStorage.setItem(
-          "refreshToken",
-          result.authentication.refreshToken
-        );
+        saveAuthSession(result.authentication);
 
         setIsGuest(false);
       }

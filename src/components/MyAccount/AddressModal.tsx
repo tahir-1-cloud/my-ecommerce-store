@@ -1,121 +1,299 @@
-import React, { useEffect } from "react";
 
-const AddressModal = ({ isOpen, closeModal }) => {
+"use client";
+
+import React, { useEffect, useState } from "react";
+import type {
+  AddressType,
+  CustomerAddress,
+  CustomerAddressRequest,
+} from "@/types/customer";
+
+interface AddressModalProps {
+  isOpen: boolean;
+  closeModal: () => void;
+  onSave: (data: CustomerAddressRequest) => Promise<void>;
+  address?: CustomerAddress | null;
+  isSaving?: boolean;
+}
+
+const initialForm: CustomerAddressRequest = {
+  type: "Shipping",
+  fullName: "",
+  phoneNumber: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  state: "",
+  postalCode: "",
+  country: "",
+  isDefault: false,
+};
+
+const inputClass =
+  "w-full rounded-md border border-gray-3 bg-gray-1 px-5 py-2.5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20";
+
+const AddressModal: React.FC<AddressModalProps> = ({
+  isOpen,
+  closeModal,
+  onSave,
+  address,
+  isSaving = false,
+}) => {
+  const [form, setForm] = useState<CustomerAddressRequest>(initialForm);
+
   useEffect(() => {
-    // closing modal while clicking outside
-    function handleClickOutside(event) {
-      if (!event.target.closest(".modal-content")) {
+    if (!isOpen) return;
+
+    if (address) {
+      setForm({
+        type: address.type,
+        fullName: address.fullName,
+        phoneNumber: address.phoneNumber,
+        addressLine1: address.addressLine1,
+        addressLine2: address.addressLine2 ?? "",
+        city: address.city,
+        state: address.state ?? "",
+        postalCode: address.postalCode ?? "",
+        country: address.country,
+        isDefault: address.isDefault,
+      });
+    } else {
+      setForm(initialForm);
+    }
+  }, [isOpen, address]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isSaving) {
         closeModal();
       }
-    }
+    };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
     };
-  }, [isOpen, closeModal]);
+  }, [isOpen, closeModal, isSaving]);
+
+  if (!isOpen) return null;
+
+  const updateField = <K extends keyof CustomerAddressRequest>(
+    key: K,
+    value: CustomerAddressRequest[K]
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      [key]: value,
+    }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    await onSave({
+      ...form,
+      fullName: form.fullName.trim(),
+      phoneNumber: form.phoneNumber.trim(),
+      addressLine1: form.addressLine1.trim(),
+      addressLine2: form.addressLine2?.trim() || null,
+      city: form.city.trim(),
+      state: form.state?.trim() || null,
+      postalCode: form.postalCode?.trim() || null,
+      country: form.country.trim(),
+    });
+  };
 
   return (
     <div
-      className={`fixed top-0 left-0 overflow-y-auto no-scrollbar w-full h-screen sm:py-20 xl:py-25 2xl:py-[230px] bg-dark/70 sm:px-8 px-4 py-5 ${isOpen ? "block z-99999" : "hidden"
-        }`}
+      className="fixed inset-0 z-[99999] overflow-y-auto bg-dark/70 px-4 py-5 sm:px-8 sm:py-16"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !isSaving) {
+          closeModal();
+        }
+      }}
     >
-      <div className="flex items-center justify-center ">
-        <div
-          x-show="addressModal"
-          className="w-full max-w-[1100px] rounded-xl shadow-3 bg-white p-7.5 relative modal-content"
-        >
+      <div className="flex min-h-full items-center justify-center">
+        <div className="modal-content relative w-full max-w-[900px] rounded-xl bg-white p-5 shadow-3 sm:p-7.5">
           <button
+            type="button"
             onClick={closeModal}
-            aria-label="button for close modal"
-            className="absolute top-0 right-0 sm:top-3 sm:right-3 flex items-center justify-center w-10 h-10 rounded-full ease-in duration-150 bg-meta text-body hover:text-dark"
+            disabled={isSaving}
+            aria-label="Close address modal"
+            className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-meta text-body hover:text-dark disabled:opacity-50"
           >
-            <svg
-              className="fill-current"
-              width="26"
-              height="26"
-              viewBox="0 0 26 26"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M14.3108 13L19.2291 8.08167C19.5866 7.72417 19.5866 7.12833 19.2291 6.77083C19.0543 6.59895 18.8189 6.50262 18.5737 6.50262C18.3285 6.50262 18.0932 6.59895 17.9183 6.77083L13 11.6892L8.08164 6.77083C7.90679 6.59895 7.67142 6.50262 7.42623 6.50262C7.18104 6.50262 6.94566 6.59895 6.77081 6.77083C6.41331 7.12833 6.41331 7.72417 6.77081 8.08167L11.6891 13L6.77081 17.9183C6.41331 18.2758 6.41331 18.8717 6.77081 19.2292C7.12831 19.5867 7.72414 19.5867 8.08164 19.2292L13 14.3108L17.9183 19.2292C18.2758 19.5867 18.8716 19.5867 19.2291 19.2292C19.5866 18.8717 19.5866 18.2758 19.2291 17.9183L14.3108 13Z"
-                fill=""
-              />
-            </svg>
+            <span className="text-2xl">&times;</span>
           </button>
 
-          <div>
-            <form>
-              <div className="flex flex-col lg:flex-row gap-5 sm:gap-8 mb-5">
-                <div className="w-full">
-                  <label htmlFor="name" className="block mb-2.5">
-                    Name
-                  </label>
+          <h2 className="mb-6 pr-10 text-xl font-semibold text-dark">
+            {address ? "Update Address" : "Add New Address"}
+          </h2>
 
-                  <input
-                    type="text"
-                    name="name"
-                    value="James Septimus"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                  />
-                </div>
+          <form onSubmit={handleSubmit}>
+            <div className="mb-5">
+              <label className="mb-2 block text-sm font-medium text-dark">
+                Address Type
+              </label>
 
-                <div className="w-full">
-                  <label htmlFor="email" className="block mb-2.5">
-                    Email
-                  </label>
+              <select
+                value={form.type}
+                onChange={(event) =>
+                  updateField("type", event.target.value as AddressType)
+                }
+                className={inputClass}
+              >
+                <option value="Shipping">Shipping Address</option>
+                <option value="Billing">Billing Address</option>
+              </select>
+            </div>
 
-                  <input
-                    type="email"
-                    name="email"
-                    value="jamse@example.com"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                  />
-                </div>
+            <div className="mb-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm text-dark">
+                  Full Name *
+                </label>
+                <input
+                  required
+                  maxLength={200}
+                  value={form.fullName}
+                  onChange={(e) => updateField("fullName", e.target.value)}
+                  className={inputClass}
+                  placeholder="Enter full name"
+                />
               </div>
 
-              <div className="flex flex-col lg:flex-row gap-5 sm:gap-8 mb-5">
-                <div className="w-full">
-                  <label htmlFor="phone" className="block mb-2.5">
-                    Phone
-                  </label>
+              <div>
+                <label className="mb-2 block text-sm text-dark">
+                  Phone Number *
+                </label>
+                <input
+                  required
+                  maxLength={20}
+                  type="tel"
+                  value={form.phoneNumber}
+                  onChange={(e) => updateField("phoneNumber", e.target.value)}
+                  className={inputClass}
+                  placeholder="Enter phone number"
+                />
+              </div>
+            </div>
 
-                  <input
-                    type="text"
-                    name="phone"
-                    value="1234 567890"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                  />
-                </div>
+            <div className="mb-5">
+              <label className="mb-2 block text-sm text-dark">
+                Address Line 1 *
+              </label>
+              <input
+                required
+                maxLength={300}
+                value={form.addressLine1}
+                onChange={(e) => updateField("addressLine1", e.target.value)}
+                className={inputClass}
+                placeholder="Street address"
+              />
+            </div>
 
-                <div className="w-full">
-                  <label htmlFor="address" className="block mb-2.5">
-                    Address
-                  </label>
+            <div className="mb-5">
+              <label className="mb-2 block text-sm text-dark">
+                Address Line 2
+              </label>
+              <input
+                maxLength={300}
+                value={form.addressLine2 ?? ""}
+                onChange={(e) => updateField("addressLine2", e.target.value)}
+                className={inputClass}
+                placeholder="Apartment, suite, etc. (optional)"
+              />
+            </div>
 
-                  <input
-                    type="text"
-                    name="address"
-                    value="7398 Smoke Ranch RoadLas Vegas, Nevada 89128"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                  />
-                </div>
+            <div className="mb-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm text-dark">
+                  City *
+                </label>
+                <input
+                  required
+                  maxLength={100}
+                  value={form.city}
+                  onChange={(e) => updateField("city", e.target.value)}
+                  className={inputClass}
+                />
               </div>
 
+              <div>
+                <label className="mb-2 block text-sm text-dark">
+                  State / Province
+                </label>
+                <input
+                  maxLength={100}
+                  value={form.state ?? ""}
+                  onChange={(e) => updateField("state", e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="mb-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm text-dark">
+                  Postal Code
+                </label>
+                <input
+                  maxLength={20}
+                  value={form.postalCode ?? ""}
+                  onChange={(e) => updateField("postalCode", e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm text-dark">
+                  Country *
+                </label>
+                <input
+                  required
+                  maxLength={100}
+                  value={form.country}
+                  onChange={(e) => updateField("country", e.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <label className="mb-6 flex cursor-pointer items-center gap-2 text-sm text-dark">
+              <input
+                type="checkbox"
+                checked={form.isDefault}
+                onChange={(e) => updateField("isDefault", e.target.checked)}
+                className="h-4 w-4"
+              />
+              Set as default address
+            </label>
+
+            <div className="flex flex-wrap gap-3">
               <button
                 type="submit"
-                className="inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark"
+                disabled={isSaving}
+                className="rounded-md bg-blue px-7 py-3 font-medium text-white duration-200 hover:bg-blue-dark disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Save Changes
+                {isSaving
+                  ? "Saving..."
+                  : address
+                    ? "Update Address"
+                    : "Save Address"}
               </button>
-            </form>
-          </div>
+
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={isSaving}
+                className="rounded-md border border-gray-3 px-7 py-3 font-medium text-dark hover:bg-gray-1 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
