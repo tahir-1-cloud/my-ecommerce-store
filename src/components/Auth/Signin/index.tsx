@@ -4,6 +4,7 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import Link from "next/link";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { authService } from "@/services/authService";
 
 const Signin = () => {
   const router = useRouter();
@@ -15,27 +16,42 @@ const Signin = () => {
   const ADMIN_EMAIL = "admin@example.com";
   const ADMIN_PASSWORD = "Admin@123";
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
 
-    setError("");
+const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  e.preventDefault();
+  setError("");
 
-    if (
-      email.trim().toLowerCase() === ADMIN_EMAIL &&
-      password === ADMIN_PASSWORD
-    ) {
-      // Temporary login session
-      document.cookie =
-        "admin_session=true; path=/; max-age=86400; samesite=lax";
+  // Existing admin login — unchanged
+  if (
+    email.trim().toLowerCase() === "admin@example.com" &&
+    password === "Admin@123"
+  ) {
+    document.cookie =
+      "admin_session=true; path=/; max-age=86400; samesite=lax";
 
-      router.push("/admin");
-      router.refresh();
+    router.push("/admin");
+    router.refresh();
+    return;
+  }
 
-      return;
-    }
+  // Customer login through backend API
+  try {
+    await authService.login({
+      email: email.trim(),
+      password,
+    });
 
-    setError("Invalid email or password.");
-  };
+    router.push("/my-account");
+    router.refresh();
+  } catch (error) {
+    setError(
+      error instanceof Error
+        ? error.message
+        : "Unable to login. Please try again."
+    );
+  }
+};
+
 
   return (
     <>

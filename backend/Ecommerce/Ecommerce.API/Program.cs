@@ -98,6 +98,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductRepository,ProductRepository>();
 builder.Services.AddScoped<ICheckoutRepository,CheckoutRepository>();
+builder.Services.AddScoped<IAdminOrderRepository,AdminOrderRepository>();
+builder.Services.AddScoped<ICustomerRepository,CustomerRepository>();
 // Controllers
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

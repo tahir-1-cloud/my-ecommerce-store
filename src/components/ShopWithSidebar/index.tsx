@@ -18,6 +18,8 @@ import type { Product } from "@/types/product";
 
 import { useAddToCart } from "@/hooks/useAddToCart";
 
+import { useRouter } from "next/navigation";
+
 const PAGE_SIZE = 9;
 
 type SortOption = "0" | "1" | "2";
@@ -74,6 +76,7 @@ const getProductPrice = (product: Product): number => {
 };
 
 const ShopWithSidebar = () => {
+    const router = useRouter();
   const [productStyle, setProductStyle] = useState<"grid" | "list">("grid");
   const [productSidebar, setProductSidebar] = useState(false);
 
@@ -589,7 +592,7 @@ const filteredProducts = useMemo(() => {
                   <p className="text-red">{productError}</p>
                   <button
                     type="button"
-                    onClick={() => window.location.reload()}
+                 onClick={() => router.refresh()}
                     className="mt-4 rounded-md bg-blue px-5 py-2 text-white hover:bg-blue-dark"
                   >
                     Try Again

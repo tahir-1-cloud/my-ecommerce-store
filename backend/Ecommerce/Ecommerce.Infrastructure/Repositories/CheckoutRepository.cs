@@ -161,7 +161,7 @@ public class CheckoutRepository : ICheckoutRepository
                 UserId = userId,
 
                 OrderNumber = $"ORD-{DateTime.UtcNow:yyMMdd}-{Guid.NewGuid():N}"[..18].ToUpper(),
-
+                CreatedAt = DateTime.UtcNow, 
                 Status = OrderStatus.Pending,
                 PaymentStatus = PaymentStatus.Pending,
                 PaymentMethod = PaymentMethod.CashOnDelivery,
@@ -219,7 +219,8 @@ public class CheckoutRepository : ICheckoutRepository
                     new OrderStatusHistory
                     {
                         Status = OrderStatus.Pending,
-                        Note = "Order placed."
+                        Note = "Order placed.",
+                        CreatedAt = DateTime.UtcNow
                     }
                 }
             };
