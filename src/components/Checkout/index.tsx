@@ -13,6 +13,15 @@ import Billing, { type AddressForm } from "./Billing";
 
 import { checkoutService } from "@/services/checkoutService";
 import { saveAuthSession } from "@/services/authService";
+
+import { useDispatch, useSelector } from "react-redux";
+
+import {
+  selectCartItems,
+  removeAllItemsFromCart,
+} from "@/redux/features/cart-slice";
+import { customerService } from "@/services/customerService";
+
 import type {
   CheckoutMode,
   CheckoutResponse,
@@ -38,6 +47,9 @@ const emptyAddress: AddressForm = {
 };
 
 const Checkout = () => {
+
+  const cartItems = useSelector(selectCartItems);
+  const dispatch = useDispatch();
   const [shippingAddress, setShippingAddress] =
     useState<AddressForm>(emptyAddress);
 
@@ -60,13 +72,82 @@ const Checkout = () => {
   const [placedOrder, setPlacedOrder] = useState<OrderResponse | null>(null);
 
   // Detect existing login
-  useEffect(() => {
+
+useEffect(() => {
+  let isMounted = true;
+
+  const loadCustomerDetails = async () => {
     const token =
-      localStorage.getItem("accessToken") ?? localStorage.getItem("token");
+      localStorage.getItem("accessToken") ??
+      localStorage.getItem("token");
 
-    setIsGuest(!token);
-  }, []);
+    if (!token) {
+      if (isMounted) setIsGuest(true);
+      return;
+    }
 
+    try {
+      if (isMounted) setIsGuest(false);
+
+      const [profile, addresses] = await Promise.all([
+        customerService.getProfile(),
+        customerService.getAddresses(),
+      ]);
+
+      if (!isMounted) return;
+
+      const shipping =
+        addresses.find(
+          (address) =>
+            String(address.type).toLowerCase() === "shipping" &&
+            address.isDefault
+        ) ??
+        addresses.find(
+          (address) =>
+            String(address.type).toLowerCase() === "shipping"
+        );
+
+      if (shipping) {
+        const nameParts = shipping.fullName.trim().split(/\s+/);
+        const firstName = nameParts.shift() ?? "";
+        const lastName = nameParts.join(" ");
+
+        setShippingAddress({
+          firstName,
+          lastName,
+          companyName: "",
+          country: shipping.country ?? "",
+          addressLine1: shipping.addressLine1 ?? "",
+          addressLine2: shipping.addressLine2 ?? "",
+          city: shipping.city ?? "",
+          state: shipping.state ?? "",
+          postalCode: shipping.postalCode ?? "",
+          phoneNumber: shipping.phoneNumber ?? "",
+          email: profile.email ?? "",
+        });
+      } else {
+        setShippingAddress((previous) => ({
+          ...previous,
+          firstName: profile.firstName ?? "",
+          lastName: profile.lastName ?? "",
+          phoneNumber: profile.phoneNumber ?? "",
+          email: profile.email ?? "",
+        }));
+      }
+    } catch (error) {
+      console.error("Unable to load customer checkout details:", error);
+      if (isMounted) {
+        toast.error("Unable to load your saved details.");
+      }
+    }
+  };
+
+  loadCustomerDetails();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
   // Load checkout preview from backend
   useEffect(() => {
     let isMounted = true;
@@ -103,11 +184,18 @@ const Checkout = () => {
           }
         }
 
-        const result = await checkoutService.getPreview({
-          mode,
-          productVariantId,
-          quantity,
-        });
+      const result = await checkoutService.getPreview({
+        mode,
+        productVariantId,
+        quantity,
+        guestCartItems:
+          mode === "Cart"
+            ? cartItems.map((item) => ({
+                productVariantId: item.id,
+                quantity: item.quantity,
+              }))
+            : [],
+      });
 
         if (isMounted) {
           setPreview(result);
@@ -207,7 +295,7 @@ const Checkout = () => {
       shippingAddress: mapAddress(shippingAddress),
       billingAddress: mapAddress(selectedBillingAddress),
 
-      saveAddress: false,
+      saveAddress: true,
     };
 
     try {
@@ -222,9 +310,12 @@ const Checkout = () => {
         setIsGuest(false);
       }
 
-      setPlacedOrder(result.order);
+          if (checkoutMode === "Cart") {
+      dispatch(removeAllItemsFromCart());
+    }
 
-      toast.success("Order placed successfully!");
+    setPlacedOrder(result.order);
+    toast.success("Order placed successfully!")
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Unable to place your order."

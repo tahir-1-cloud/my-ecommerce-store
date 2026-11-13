@@ -189,6 +189,7 @@ namespace Ecommerce.Infrastructure.Repositories
         }
 
         // Update order status
+
         public async Task<bool> UpdateStatusAsync(
             int id,
             UpdateAdminOrderStatusDto request,
@@ -198,6 +199,7 @@ namespace Ecommerce.Infrastructure.Repositories
                 return false;
 
             var order = await _context.Orders
+                .Include(x => x.Payments)
                 .FirstOrDefaultAsync(
                     x => x.Id == id,
                     cancellationToken);
@@ -208,20 +210,40 @@ namespace Ecommerce.Infrastructure.Repositories
             if (order.Status == request.Status)
                 return true;
 
+            var now = DateTime.UtcNow;
+
             order.Status = request.Status;
+
+            // COD payment is marked Paid only when the order is delivered.
+            if (order.PaymentMethod == PaymentMethod.CashOnDelivery &&
+                request.Status == OrderStatus.Delivered)
+            {
+                order.PaymentStatus = PaymentStatus.Paid;
+
+                var codPayment = order.Payments
+                    .FirstOrDefault(x =>
+                        x.Method == PaymentMethod.CashOnDelivery);
+
+                if (codPayment != null)
+                {
+                    codPayment.Status = PaymentStatus.Paid;
+                    codPayment.PaidAt = now;
+                }
+            }
 
             _context.OrderStatusHistory.Add(new OrderStatusHistory
             {
                 OrderId = order.Id,
                 Status = request.Status,
                 Note = request.Note,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = now
             });
 
             await _context.SaveChangesAsync(cancellationToken);
 
             return true;
         }
+
 
         // Dashboard summary
         public async Task<AdminOrderSummaryDto> GetSummaryAsync(

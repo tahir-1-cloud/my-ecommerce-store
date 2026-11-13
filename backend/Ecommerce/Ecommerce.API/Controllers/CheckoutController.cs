@@ -26,13 +26,11 @@ public class CheckoutController : ControllerBase
         _userManager = userManager;
     }
 
-    [HttpGet("preview")]
+    [HttpPost("preview")]
     [AllowAnonymous]
     public async Task<IActionResult> GetPreview(
-        [FromQuery] string mode = "BuyNow",
-        [FromQuery] int? productVariantId = null,
-        [FromQuery] int quantity = 1,
-        CancellationToken cancellationToken = default)
+       [FromBody] CheckoutPreviewRequest request,
+       CancellationToken cancellationToken)
     {
         Guid? userId = GetAuthenticatedUserId();
 
@@ -40,9 +38,10 @@ public class CheckoutController : ControllerBase
         {
             var result = await _checkoutRepository.GetCheckoutPreviewAsync(
                 userId,
-                mode,
-                productVariantId,
-                quantity,
+                request.Mode,
+                request.ProductVariantId,
+                request.Quantity,
+                request.GuestCartItems,
                 cancellationToken);
 
             return Ok(new

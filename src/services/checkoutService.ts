@@ -16,22 +16,17 @@ interface ApiResponse<T> {
 const endpoint = "checkout";
 
 export const checkoutService = {
-  getPreview: async (params: CheckoutPreviewRequest) => {
-    const query = new URLSearchParams({
-      mode: params.mode,
-      quantity: String(params.quantity),
-    });
-
-    if (params.productVariantId) {
-      query.append("productVariantId", String(params.productVariantId));
+getPreview: async (data: CheckoutPreviewRequest) => {
+  const response = await apiRequest<ApiResponse<CheckoutResponse>>(
+    `${endpoint}/preview`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
     }
+  );
 
-    const response = await apiRequest<ApiResponse<CheckoutResponse>>(
-      `${endpoint}/preview?${query.toString()}`
-    );
-
-    return response.data;
-  },
+  return response.data;
+},
 
   placeOrder: async (data: CheckoutRequest) => {
     const response = await apiRequest<ApiResponse<PlaceOrderResponse>>(

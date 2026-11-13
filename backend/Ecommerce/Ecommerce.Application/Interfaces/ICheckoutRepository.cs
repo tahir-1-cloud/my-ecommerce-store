@@ -15,6 +15,7 @@ namespace Ecommerce.Application.Interfaces
         string mode,
         int? productVariantId,
         int quantity,
+        List<GuestCartItemRequest> cartItems,
         CancellationToken cancellationToken = default);
 
    

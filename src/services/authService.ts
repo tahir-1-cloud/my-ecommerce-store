@@ -10,20 +10,19 @@ import type {
 const endpoint = "auth";
 
 export function saveAuthSession(response: AuthResponse) {
-  if (typeof window === "undefined") {
-    return;
-  }
+  if (typeof window === "undefined") return;
 
   localStorage.setItem("accessToken", response.accessToken);
   localStorage.setItem("refreshToken", response.refreshToken);
-  localStorage.setItem("accessTokenExpiresAt", response.accessTokenExpiresAt);
+  localStorage.setItem(
+    "accessTokenExpiresAt",
+    response.accessTokenExpiresAt
+  );
   localStorage.setItem("user", JSON.stringify(response.user));
 }
 
 export function clearAuthSession() {
-  if (typeof window === "undefined") {
-    return;
-  }
+  if (typeof window === "undefined") return;
 
   localStorage.removeItem("accessToken");
   localStorage.removeItem("refreshToken");

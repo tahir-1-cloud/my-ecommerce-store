@@ -21,6 +21,7 @@ public class CheckoutRepository : ICheckoutRepository
         string mode,
         int? productVariantId,
         int quantity,
+        List<GuestCartItemRequest> cartItems,
         CancellationToken cancellationToken = default)
     {
         var items = await GetCheckoutItemsAsync(
@@ -104,7 +105,7 @@ public class CheckoutRepository : ICheckoutRepository
                 request.Quantity,
                 true,
                 cancellationToken,
-                isGuest ? request.GuestCartItems : null);
+                request.GuestCartItems);
 
             if (items.Count == 0)
                 throw new InvalidOperationException(
@@ -229,19 +230,44 @@ public class CheckoutRepository : ICheckoutRepository
 
             if (request.SaveAddress)
             {
-                _context.CustomerAddresses.Add(new CustomerAddress
+                var existingAddress = await _context.CustomerAddresses
+                    .FirstOrDefaultAsync(x =>
+                        x.UserId == userId &&
+                        x.Type == AddressType.Shipping &&
+                        x.FullName == shipping.FullName &&
+                        x.PhoneNumber == shipping.PhoneNumber &&
+                        x.AddressLine1 == shipping.AddressLine1 &&
+                        x.AddressLine2 == shipping.AddressLine2 &&
+                        x.City == shipping.City &&
+                        x.State == shipping.State &&
+                        x.PostalCode == shipping.PostalCode &&
+                        x.Country == shipping.Country,
+                        cancellationToken);
+
+                if (existingAddress == null)
                 {
-                    UserId = userId,
-                    FullName = shipping.FullName,
-                    PhoneNumber = shipping.PhoneNumber,
-                    AddressLine1 = shipping.AddressLine1,
-                    AddressLine2 = shipping.AddressLine2,
-                    City = shipping.City,
-                    State = shipping.State,
-                    PostalCode = shipping.PostalCode,
-                    Country = shipping.Country,
-                    IsDefault = false
-                });
+                    var hasDefaultShippingAddress =
+                        await _context.CustomerAddresses.AnyAsync(x =>
+                            x.UserId == userId &&
+                            x.Type == AddressType.Shipping &&
+                            x.IsDefault,
+                            cancellationToken);
+
+                    _context.CustomerAddresses.Add(new CustomerAddress
+                    {
+                        UserId = userId,
+                        Type = AddressType.Shipping,
+                        FullName = shipping.FullName,
+                        PhoneNumber = shipping.PhoneNumber,
+                        AddressLine1 = shipping.AddressLine1,
+                        AddressLine2 = shipping.AddressLine2,
+                        City = shipping.City,
+                        State = shipping.State,
+                        PostalCode = shipping.PostalCode,
+                        Country = shipping.Country,
+                        IsDefault = !hasDefaultShippingAddress
+                    });
+                }
             }
 
             // Only clear database cart for logged-in Cart checkout.
