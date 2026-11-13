@@ -1,83 +1,157 @@
-import React, { useState } from "react";
+"use client";
 
-const Login = () => {
-  const [dropdown, setDropdown] = useState(false);
+import React, { useState } from "react";
+import { authService } from "@/services/authService";
+import { btnPrimary, inputClass, labelClass } from "./CheckoutParts";
+
+interface LoginProps {
+  onLoginSuccess: () => Promise<void> | void;
+}
+
+const Login = ({ onLoginSuccess }: LoginProps) => {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+ const handleSubmit = async () => {
+  setError("");
+
+  if (!email.trim() || !password) {
+    setError("Please enter your email and password.");
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    await authService.login({
+      email: email.trim(),
+      password,
+    });
+
+    await onLoginSuccess();
+
+    setOpen(false);
+    setPassword("");
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : "Unable to login. Please try again."
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
-    <div className="bg-white shadow-1 rounded-[10px]">
-      <div
-        onClick={() => setDropdown(!dropdown)}
-        className={`cursor-pointer flex items-center gap-0.5 py-5 px-5.5 ${
-          dropdown && "border-b border-gray-3"
-        }`}
+    <div className="mb-6 overflow-hidden rounded-xl border border-gray-3 bg-white shadow-1 sm:mb-7.5">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 bg-[#F8F9FC] px-4 py-4 text-left sm:px-8 sm:py-5"
       >
-        Returning customer?
-        <span className="flex items-center gap-2.5 pl-1 font-medium text-dark">
-          Click here to login
-          <svg
-            className={`${
-              dropdown && "rotate-180"
-            } fill-current ease-out duration-200`}
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M4.06103 7.80259C4.30813 7.51431 4.74215 7.48092 5.03044 7.72802L10.9997 12.8445L16.9689 7.72802C17.2572 7.48092 17.6912 7.51431 17.9383 7.80259C18.1854 8.09088 18.1521 8.5249 17.8638 8.772L11.4471 14.272C11.1896 14.4927 10.8097 14.4927 10.5523 14.272L4.1356 8.772C3.84731 8.5249 3.81393 8.09088 4.06103 7.80259Z"
-              fill=""
-            />
-          </svg>
+        <span className="flex items-center gap-3.5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#E0E7FF] text-blue">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" />
+            </svg>
+          </span>
+          <span>
+            <span className="block font-semibold text-dark">
+              Returning customer?
+            </span>
+            <span className="block text-sm text-[#4B5563]">
+              Log in to use your saved addresses.
+            </span>
+          </span>
         </span>
-      </div>
 
-      {/* <!-- dropdown menu --> */}
-      <div
-        className={`${
-          dropdown ? "block" : "hidden"
-        } pt-7.5 pb-8.5 px-4 sm:px-8.5`}
-      >
-        <p className="text-custom-sm mb-6">
-          If you didn&apos;t Logged in, Please Log in first.
-        </p>
+        <svg
+          className={`shrink-0 text-dark duration-200 ${
+            open ? "rotate-180" : ""
+          }`}
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+{open && (
+  <div className="border-t border-gray-3 p-4 sm:p-8">
+          <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label htmlFor="checkout-email" className={labelClass}>
+                Email
+              </label>
+              <input
+                type="email"
+                id="checkout-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+                className={inputClass}
+              />
+            </div>
 
-        <div className="mb-5">
-          <label htmlFor="name" className="block mb-2.5">
-            Username or Email
-          </label>
+            <div>
+              <label htmlFor="checkout-password" className={labelClass}>
+                Password
+              </label>
+              <input
+                type="password"
+                id="checkout-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+                className={inputClass}
+              />
+            </div>
+          </div>
 
-          <input
-            type="text"
-            name="name"
-            id="name"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-        </div>
-
-        <div className="mb-5">
-          <label htmlFor="password" className="block mb-2.5">
-            Password
-          </label>
-
-          <input
-            type="password"
-            name="password"
-            id="password"
-            autoComplete="on"
-            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-          />
-        </div>
+          {error && (
+            <div
+              role="alert"
+              className="mb-5 rounded-lg border border-[#FCA5A5] bg-[#FEE2E2] px-4 py-3 text-sm font-medium text-[#991B1B]"
+            >
+              {error}
+            </div>
+          )}
 
         <button
-          type="submit"
-          className="inline-flex font-medium text-white bg-blue py-3 px-10.5 rounded-md ease-out duration-200 hover:bg-blue-dark"
+          type="button"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className={btnPrimary}
         >
-          Login
+          {isSubmitting ? "Logging in..." : "Login"}
         </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };

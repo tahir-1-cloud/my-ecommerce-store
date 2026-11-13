@@ -43,7 +43,7 @@ export interface CheckoutPreviewRequest {
   mode: CheckoutMode;
   productVariantId?: number;
   quantity: number;
-  guestCartItems: {
+  guestCartItems?: {
     productVariantId: number;
     quantity: number;
   }[];

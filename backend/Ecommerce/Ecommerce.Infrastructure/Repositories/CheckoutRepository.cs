@@ -105,7 +105,7 @@ public class CheckoutRepository : ICheckoutRepository
                 request.Quantity,
                 true,
                 cancellationToken,
-                request.GuestCartItems);
+               isGuest ? request.GuestCartItems : null);
 
             if (items.Count == 0)
                 throw new InvalidOperationException(

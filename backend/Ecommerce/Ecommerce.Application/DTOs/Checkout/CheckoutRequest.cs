@@ -25,7 +25,7 @@ namespace Ecommerce.Application.DTOs.Checkout
         // Null means same as shipping address
         public AddressRequest? BillingAddress { get; set; }
 
-        public List<GuestCartItemRequest> GuestCartItems { get; set; } = new();
+        public List<GuestCartItemRequest>? GuestCartItems { get; set; }
 
         public bool SaveAddress { get; set; }
     }
