@@ -4,6 +4,7 @@ using Ecommerce.Domain.Entities;
 using Ecommerce.Domain.Enum;
 using Ecommerce.Infrastructure.Data;
 using Ecommerce.Infrastructure.Identity;
+using Mapster;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -176,7 +177,7 @@ namespace Ecommerce.Infrastructure.Repositories
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return MapAddress(address);
+            return address.Adapt<CustomerAddressDto>();
         }
 
         // UPDATE ADDRESS
@@ -230,7 +231,7 @@ namespace Ecommerce.Infrastructure.Repositories
             await _context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return MapAddress(address);
+            return address.Adapt<CustomerAddressDto>();
         }
 
         // DELETE ADDRESS
@@ -484,22 +485,22 @@ namespace Ecommerce.Infrastructure.Repositories
             };
         }
 
-        private static CustomerAddressDto MapAddress(CustomerAddress address)
-        {
-            return new CustomerAddressDto
-            {
-                Id = address.Id,
-                Type = address.Type.ToString(),
-                FullName = address.FullName,
-                PhoneNumber = address.PhoneNumber,
-                AddressLine1 = address.AddressLine1,
-                AddressLine2 = address.AddressLine2,
-                City = address.City,
-                State = address.State,
-                PostalCode = address.PostalCode,
-                Country = address.Country,
-                IsDefault = address.IsDefault
-            };
-        }
+        //private static CustomerAddressDto MapAddress(CustomerAddress address)
+        //{
+        //    return new CustomerAddressDto
+        //    {
+        //        Id = address.Id,
+        //        Type = address.Type.ToString(),
+        //        FullName = address.FullName,
+        //        PhoneNumber = address.PhoneNumber,
+        //        AddressLine1 = address.AddressLine1,
+        //        AddressLine2 = address.AddressLine2,
+        //        City = address.City,
+        //        State = address.State,
+        //        PostalCode = address.PostalCode,
+        //        Country = address.Country,
+        //        IsDefault = address.IsDefault
+        //    };
+        //}
     }
 }

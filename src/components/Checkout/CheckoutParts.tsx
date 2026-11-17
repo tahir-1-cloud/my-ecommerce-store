@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { CustomerAddress } from "@/types/customer";
+import type { AddressForm } from "./Billing";
 
 export type SavedSelection = number | "new" | null;
 
@@ -103,6 +104,7 @@ export function SavedAddressList({
   selected,
   onSelect,
   onEdit,
+  allowNew = true,
   newLabel = "Use a new address",
 }: {
   name: string;
@@ -110,6 +112,8 @@ export function SavedAddressList({
   selected: SavedSelection;
   onSelect: (selection: number | "new") => void;
   onEdit?: (address: CustomerAddress) => void;
+  // false: sirf saved addresses (naya add nahi)
+  allowNew?: boolean;
   newLabel?: string;
 }) {
   return (
@@ -121,7 +125,7 @@ export function SavedAddressList({
           checked={selected === address.id}
           onSelect={() => onSelect(address.id)}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0 space-y-0.5">
               <p className="flex flex-wrap items-center gap-2 font-semibold text-dark">
                 {address.fullName}
@@ -145,8 +149,21 @@ export function SavedAddressList({
                   event.stopPropagation();
                   onEdit(address);
                 }}
-                className="shrink-0 rounded-md border border-[#CBD2E0] bg-white px-3 py-1.5 text-sm font-semibold text-dark duration-200 hover:border-blue hover:text-blue"
+                className="inline-flex h-9 w-fit shrink-0 items-center gap-1.5 rounded-md border border-[#CBD2E0] bg-white px-3.5 text-sm font-semibold text-dark duration-200 hover:border-blue hover:text-blue"
               >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" />
+                </svg>
                 Edit
               </button>
             )}
@@ -154,28 +171,128 @@ export function SavedAddressList({
         </RadioCard>
       ))}
 
-      <RadioCard
-        name={name}
-        checked={selected === "new"}
-        onSelect={() => onSelect("new")}
-      >
-        <span className="flex items-center gap-2 font-semibold text-dark">
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="text-blue"
-            aria-hidden="true"
-          >
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          {newLabel}
-        </span>
-      </RadioCard>
+      {allowNew && (
+        <RadioCard
+          name={name}
+          checked={selected === "new"}
+          onSelect={() => onSelect("new")}
+        >
+          <span className="flex items-center gap-2 font-semibold text-dark">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="text-blue"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {newLabel}
+          </span>
+        </RadioCard>
+      )}
+    </div>
+  );
+}
+
+// Logged-in user ke edit/add ke liye: sirf address fields
+// (naam, email, phone profile se aate hain)
+export function AddressEditFields({
+  idPrefix = "addr",
+  value,
+  onChange,
+}: {
+  idPrefix?: string;
+  value: AddressForm;
+  onChange: (value: AddressForm) => void;
+}) {
+  const set =
+    (field: keyof AddressForm) =>
+    (event: React.ChangeEvent<HTMLInputElement>) =>
+      onChange({ ...value, [field]: event.target.value });
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <label htmlFor={`${idPrefix}-country`} className={labelClass}>
+          Country / Region <Req />
+        </label>
+        <input
+          id={`${idPrefix}-country`}
+          autoComplete="country-name"
+          value={value.country}
+          onChange={set("country")}
+          placeholder="Pakistan"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <label htmlFor={`${idPrefix}-line1`} className={labelClass}>
+          Street Address <Req />
+        </label>
+        <input
+          id={`${idPrefix}-line1`}
+          autoComplete="address-line1"
+          value={value.addressLine1}
+          onChange={set("addressLine1")}
+          placeholder="House number and street name"
+          className={inputClass}
+        />
+        <input
+          aria-label="Address line 2"
+          autoComplete="address-line2"
+          value={value.addressLine2}
+          onChange={set("addressLine2")}
+          placeholder="Apartment, suite, unit, etc. (optional)"
+          className={`${inputClass} mt-3`}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+        <div>
+          <label htmlFor={`${idPrefix}-city`} className={labelClass}>
+            Town / City <Req />
+          </label>
+          <input
+            id={`${idPrefix}-city`}
+            autoComplete="address-level2"
+            value={value.city}
+            onChange={set("city")}
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label htmlFor={`${idPrefix}-state`} className={labelClass}>
+            State / Province
+          </label>
+          <input
+            id={`${idPrefix}-state`}
+            autoComplete="address-level1"
+            value={value.state}
+            onChange={set("state")}
+            className={inputClass}
+          />
+        </div>
+
+        <div>
+          <label htmlFor={`${idPrefix}-postal`} className={labelClass}>
+            Postal Code
+          </label>
+          <input
+            id={`${idPrefix}-postal`}
+            autoComplete="postal-code"
+            value={value.postalCode}
+            onChange={set("postalCode")}
+            className={inputClass}
+          />
+        </div>
+      </div>
     </div>
   );
 }

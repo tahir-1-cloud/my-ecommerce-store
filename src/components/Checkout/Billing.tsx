@@ -43,6 +43,7 @@ interface BillingProps {
   savedAddresses?: CustomerAddress[];
   selectedSavedId?: SavedSelection;
   onSelectSaved?: (selection: number | "new") => void;
+  allowNewSaved?: boolean;
 }
 
 const BillingFields = ({
@@ -194,6 +195,7 @@ const Billing = ({
   savedAddresses = [],
   selectedSavedId = null,
   onSelectSaved,
+  
 }: BillingProps) => {
   const hasSaved = savedAddresses.length > 0 && !!onSelectSaved;
   const showForm = !hasSaved || selectedSavedId === "new";

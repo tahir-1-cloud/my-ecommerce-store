@@ -4,6 +4,7 @@ using Ecommerce.Application.Interfaces;
 using Ecommerce.Domain.Entities;
 using Ecommerce.Domain.Enum;
 using Ecommerce.Infrastructure.Data;
+using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ecommerce.Infrastructure.Repositories
@@ -85,9 +86,7 @@ namespace Ecommerce.Infrastructure.Repositories
         }
 
         // Get order details
-        public async Task<AdminOrderDto?> GetByIdAsync(
-            int id,
-            CancellationToken cancellationToken = default)
+        public async Task<AdminOrderDto?> GetByIdAsync(int id,CancellationToken cancellationToken = default)
         {
             var order = await _context.Orders
                 .AsNoTracking()
@@ -117,75 +116,69 @@ namespace Ecommerce.Infrastructure.Repositories
             if (user == null)
                 return null;
 
-            return new AdminOrderDto
+            var result = order.Adapt<AdminOrderDto>();
+
+
+            // Customer information
+            result.CustomerName = $"{user.FirstName} {user.LastName}".Trim();
+            result.CustomerEmail = user.Email ?? string.Empty;
+            result.CustomerPhone = user.PhoneNumber ?? string.Empty;
+
+            // Enum conversions
+            result.Status = order.Status.ToString();
+            result.PaymentStatus = order.PaymentStatus.ToString();
+            result.PaymentMethod = order.PaymentMethod.ToString();
+
+
+            result.ItemsCount = order.Items.Sum(x => x.Quantity);
+
+            // Nested mappings
+            result.Items = order.Items
+                .Adapt<List<AdminOrderDto.OrderProductDto>>();
+
+            result.Addresses = order.Addresses
+                .Adapt<List<AdminOrderDto.OrderAddressDto>>();
+
+            result.Payments = order.Payments
+                .Adapt<List<AdminOrderDto.OrderPaymentDto>>();
+
+            result.StatusHistory = order.StatusHistory
+                .OrderByDescending(x => x.CreatedAt)
+                .Adapt<List<AdminOrderDto.OrderHistoryDto>>();
+
+
+            foreach (var address in result.Addresses)
             {
-                Id = order.Id,
-                OrderNumber = order.OrderNumber,
+                address.Type = order.Addresses
+                    .First(x => x.FullName == address.FullName &&
+                                x.PhoneNumber == address.PhoneNumber)
+                    .Type.ToString();
+            }
 
-                CustomerName = user.FirstName + " " + user.LastName,
-                CustomerEmail = user.Email ?? string.Empty,
-                CustomerPhone = user.PhoneNumber ?? string.Empty,
+            foreach (var payment in result.Payments)
+            {
+                payment.Method = order.Payments
+                    .First(x => x.TransactionId == payment.TransactionId)
+                    .Method.ToString();
 
-                Status = order.Status.ToString(),
-                PaymentStatus = order.PaymentStatus.ToString(),
-                PaymentMethod = order.PaymentMethod.ToString(),
+                payment.Status = order.Payments
+                    .First(x => x.TransactionId == payment.TransactionId)
+                    .Status.ToString();
+            }
 
-                Subtotal = order.Subtotal,
-                ShippingAmount = order.ShippingAmount,
-                DiscountAmount = order.DiscountAmount,
-                TaxAmount = order.TaxAmount,
-                TotalAmount = order.TotalAmount,
+            foreach (var history in result.StatusHistory)
+            {
+                history.Status = order.StatusHistory
+                    .First(x => x.Note == history.Note &&
+                                x.CreatedAt == history.CreatedAt)
+                    .Status.ToString();
+            }
 
-                CreatedAt = order.CreatedAt,
+            return result;
 
-                ItemsCount = order.Items.Count,
 
-                Items = order.Items.Select(x =>
-                    new AdminOrderDto.OrderProductDto
-                    {
-                        ProductVariantId = x.ProductVariantId,
-                        ProductName = x.ProductName,
-                        SKU = x.SKU,
-                        UnitPrice = x.UnitPrice,
-                        Quantity = x.Quantity,
-                        TotalPrice = x.TotalPrice
-                    }).ToList(),
 
-                Addresses = order.Addresses.Select(x =>
-                    new AdminOrderDto.OrderAddressDto
-                    {
-                        Type = x.Type.ToString(),
-                        FullName = x.FullName,
-                        PhoneNumber = x.PhoneNumber,
-                        AddressLine1 = x.AddressLine1,
-                        AddressLine2 = x.AddressLine2,
-                        City = x.City,
-                        State = x.State,
-                        PostalCode = x.PostalCode,
-                        Country = x.Country
-                    }).ToList(),
-
-                Payments = order.Payments.Select(x =>
-                    new AdminOrderDto.OrderPaymentDto
-                    {
-                        Provider = x.Provider,
-                        Method = x.Method.ToString(),
-                        TransactionId = x.TransactionId,
-                        Amount = x.Amount,
-                        Currency = x.Currency,
-                        Status = x.Status.ToString(),
-                        PaidAt = x.PaidAt
-                    }).ToList(),
-
-                StatusHistory = order.StatusHistory
-                    .OrderByDescending(x => x.CreatedAt)
-                    .Select(x => new AdminOrderDto.OrderHistoryDto
-                    {
-                        Status = x.Status.ToString(),
-                        Note = x.Note,
-                        CreatedAt = x.CreatedAt
-                    }).ToList()
-            };
+           
         }
 
         // Update order status
