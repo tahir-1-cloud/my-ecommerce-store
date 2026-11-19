@@ -5,11 +5,12 @@ export const getProductImage = (item: Product): string | null =>
   item.images?.[0]?.imageUrl ||
   null;
 
+
 export const getProductVariant = (item: Product): ProductVariant | null =>
-  item.variants?.find((variant) => variant.isActive && variant.stockQuantity > 0) ??
-  item.variants?.find((variant) => variant.isActive) ??
-  item.variants?.[0] ??
-  null;
+  item.variants?.find(
+    (variant) => variant.isActive && variant.stockQuantity > 0
+  ) ?? null;
+
 
 export const getPriceInfo = (item: Product) => {
   const variant = getProductVariant(item);
@@ -38,16 +39,25 @@ export const formatPrice = (value: number | null): string =>
  * discountedPrice, imgs) expect karte hain. Ye helper real data se wahi
  * fields banata hai. Slices ko Product par migrate karo to ye hata dena.
  */
+
+
 export const toStoreItem = (item: Product) => {
-  const { price, oldPrice } = getPriceInfo(item);
+  const variant = getProductVariant(item);
   const image = getProductImage(item);
+
+  const price = variant?.price ?? 0;
+  const compare = variant?.compareAtPrice ?? null;
+
+  const oldPrice =
+    compare !== null && compare > price ? compare : null;
 
   return {
     ...item,
     title: item.name,
-    price: oldPrice ?? price ?? 0,
-    discountedPrice: price ?? 0,
-    quantity: 1, // Add this line
+    productVariantId: variant?.id ?? 0,
+    price: oldPrice ?? price,
+    discountedPrice: price,
+    quantity: 1,
     reviews: 0,
     imgs: {
       thumbnails: image ? [image] : [],
@@ -55,3 +65,4 @@ export const toStoreItem = (item: Product) => {
     },
   };
 };
+

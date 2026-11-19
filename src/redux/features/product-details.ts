@@ -1,23 +1,26 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { Product } from "@/types/product";
 
-type InitialState = {
+interface InitialState {
   value: Product;
-};
+}
 
-const initialState = {
+const initialState: InitialState = {
   value: {
-    title: "",
-    reviews: 0,
-    price: 0,
-    discountedPrice: 0,
-    img: "",
-    images: [],
     id: 0,
-    imgs: { thumbnails: [], previews: [] },
+    name: "",
+    slug: "",
+    description: null,
+    brand: null,
+    isActive: false,
+    createdAt: "",
+    isFeatured: false,
+    categoryIds: [],
+    categories: [],
+    variants: [],
+    images: [],
   },
-} as InitialState;
-
+};
 export const productDetails = createSlice({
   name: "productDetails",
   initialState,

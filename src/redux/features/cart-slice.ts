@@ -9,6 +9,7 @@ type InitialState = {
 export type CartItem = {
   id: number;
   title: string;
+  productVariantId: number;
   price: number;
   discountedPrice: number;
   quantity: number;
@@ -30,6 +31,7 @@ export const cart = createSlice({
       const {
         id,
         title,
+        productVariantId,
         price,
         quantity,
         discountedPrice,
@@ -44,6 +46,7 @@ export const cart = createSlice({
         state.items.push({
           id,
           title,
+          productVariantId,
           price,
           quantity,
           discountedPrice,
@@ -63,7 +66,6 @@ export const cart = createSlice({
       action: PayloadAction<{ id: number; quantity: number }>
     ) => {
       const { id, quantity } = action.payload;
-
       const existingItem = state.items.find((item) => item.id === id);
 
       if (existingItem) {
@@ -75,7 +77,6 @@ export const cart = createSlice({
       state.items = [];
     },
 
-    // Restore cart from localStorage
     setCartItems: (state, action: PayloadAction<CartItem[]>) => {
       state.items = action.payload;
     },

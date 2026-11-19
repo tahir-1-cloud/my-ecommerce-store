@@ -1,22 +1,26 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Product } from "@/types/product";
 
-type InitialState = {
+interface InitialState {
   value: Product;
-};
+}
 
-const initialState = {
+const initialState: InitialState = {
   value: {
-    title: "",
-    reviews: 0,
-    price: 0,
-    discountedPrice: 0,
-    img: "",
     id: 0,
+    name: "",
+    slug: "",
+    description: null,
+    brand: null,
+    isActive: false,
+    createdAt: "",
+    isFeatured: false,
+    categoryIds: [],
+    categories: [],
+    variants: [],
     images: [],
-    imgs: { thumbnails: [], previews: [] },
-  } as Product,
-} as InitialState;
+  },
+};
 
 export const quickView = createSlice({
   name: "quickView",

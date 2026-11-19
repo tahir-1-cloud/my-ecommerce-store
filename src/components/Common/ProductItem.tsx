@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,6 +15,7 @@ import {
   getPriceInfo,
   getProductImage,
   toStoreItem,
+  getProductVariant,
 } from "@/lib/helper/productHelpers";
 import { useAddToCart } from "@/hooks/useAddToCart";
 
@@ -28,6 +29,7 @@ const ProductItem = ({ item }: { item: Product }) => {
   const { price, oldPrice } = getPriceInfo(item);
 
   const added = isInCart(item.id);
+
 
   // Wishlist state (cart ki tarah store se)
   const wishlistItems = useSelector(
@@ -54,6 +56,8 @@ const ProductItem = ({ item }: { item: Product }) => {
   const handleProductDetails = () => {
     dispatch(updateproductDetails({ ...storeItem }));
   };
+
+  
 
   return (
     <div className="group">

@@ -98,37 +98,50 @@ const ShopDetails = () => {
   );
 
   // Add product to Recently Viewed after successful API loading.
-  useEffect(() => {
-    if (!product) return;
 
-    const defaultVariant =
-      product.variants?.find((variant) => variant.isActive) ??
-      product.variants?.[0];
+// Add product to Recently Viewed after successful API loading.
+useEffect(() => {
+  if (!product) return;
 
-    const currentPrice = defaultVariant?.price ?? 0;
+  const viewedVariant =
+    product.variants?.find(
+      (variant) => variant.id === selectedVariantId
+    ) ??
+    product.variants?.find(
+      (variant) => variant.isActive && variant.stockQuantity > 0
+    ) ??
+    product.variants?.find((variant) => variant.isActive) ??
+    product.variants?.[0];
 
-    const originalPrice =
-      defaultVariant?.compareAtPrice != null &&
-      defaultVariant.compareAtPrice > currentPrice
-        ? defaultVariant.compareAtPrice
-        : currentPrice;
+  // A valid variant ID is required for cart and checkout.
+  if (!viewedVariant) return;
 
-    const productImages = images.map((image) => image.imageUrl);
+  const currentPrice = viewedVariant.price;
 
-    dispatch(
-      addRecentlyViewed({
-        id: product.id,
-        title: product.name,
-        price: originalPrice,
-        discountedPrice: currentPrice,
-        quantity: 1,
-        imgs: {
-          thumbnails: productImages,
-          previews: productImages,
-        },
-      })
-    );
-  }, [dispatch, product, images]);
+  const originalPrice =
+    viewedVariant.compareAtPrice != null &&
+    viewedVariant.compareAtPrice > currentPrice
+      ? viewedVariant.compareAtPrice
+      : currentPrice;
+
+  const productImages = images.map((image) => image.imageUrl);
+
+  dispatch(
+    addRecentlyViewed({
+      id: product.id,
+      productVariantId: selectedVariant.id,
+      title: product.name,
+      price: originalPrice,
+      discountedPrice: currentPrice,
+      quantity: 1,
+      imgs: {
+        thumbnails: productImages,
+        previews: productImages,
+      },
+    })
+  );
+}, [dispatch, product, images, selectedVariantId]);
+
 
   const selectedVariant = useMemo(
     () =>
@@ -168,6 +181,7 @@ const ShopDetails = () => {
 const cartItem = product
   ? {
       id: product.id,
+      productVariantId: selectedVariant.id,
       title: product.name,
       price: hasDiscount ? compareAtPrice! : price,
       discountedPrice: price,

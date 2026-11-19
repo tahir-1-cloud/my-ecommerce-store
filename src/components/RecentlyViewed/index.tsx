@@ -17,6 +17,8 @@ export const RecentlyViewed = () => {
 
   const items = useAppSelector((state) => state.recentlyViewedReducer.items);
 
+
+  
   return (
     <>
       <Breadcrumb title={"Recently Viewed"} pages={["recently viewed"]} />
@@ -137,7 +139,12 @@ export const RecentlyViewed = () => {
                         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center px-4 pb-4 duration-200 ease-out lg:translate-y-full lg:group-hover:translate-y-0">
                           <button
                             type="button"
-                            onClick={() => handleAddToCart(item)}
+                           onClick={() =>
+                            handleAddToCart({
+                              ...item,
+                              productVariantId: item.productVariantId,
+                            })
+                          }
                             disabled={added}
                             className={`pointer-events-auto inline-flex h-11 w-full max-w-[220px] items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap shadow-1 duration-200 ease-out ${
                               added

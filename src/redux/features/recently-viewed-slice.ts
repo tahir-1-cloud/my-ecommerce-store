@@ -4,6 +4,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export type RecentlyViewedItem = {
   id: number;
   title: string;
+  productVariantId: number;
   price: number;
   discountedPrice: number;
   quantity: number;

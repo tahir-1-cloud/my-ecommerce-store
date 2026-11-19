@@ -17,6 +17,11 @@ export const useAddToCart = () => {
   );
 
   const handleAddToCart = (item: CartItemInput) => {
+    if (!item.productVariantId || item.productVariantId <= 0) {
+      toast.error("Product variant is missing.");
+      return;
+    }
+
     const existingItem = cartItems.some(
       (cartItem) => cartItem.id === item.id
     );

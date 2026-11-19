@@ -16,6 +16,7 @@ public class CheckoutRepository : ICheckoutRepository
         _context = context;
     }
 
+
     public async Task<CheckoutResponse> GetCheckoutPreviewAsync(
         Guid? userId,
         string mode,
@@ -30,7 +31,8 @@ public class CheckoutRepository : ICheckoutRepository
             productVariantId,
             quantity,
             false,
-            cancellationToken);
+            cancellationToken,
+            cartItems);
 
         var response = new CheckoutResponse();
 
@@ -85,6 +87,7 @@ public class CheckoutRepository : ICheckoutRepository
         return response;
     }
 
+
     public async Task<Order> CreateCodOrderAsync(
         Guid userId,
         CheckoutRequest request,
@@ -105,7 +108,7 @@ public class CheckoutRepository : ICheckoutRepository
                 request.Quantity,
                 true,
                 cancellationToken,
-               isGuest ? request.GuestCartItems : null);
+                request.GuestCartItems);
 
             if (items.Count == 0)
                 throw new InvalidOperationException(
@@ -348,86 +351,56 @@ public class CheckoutRepository : ICheckoutRepository
         }
 
         // CART CHECKOUT
+
         if (mode.Equals("Cart", StringComparison.OrdinalIgnoreCase))
         {
-            // GUEST CART: Items come from frontend localStorage.
-            if (guestCartItems != null)
+            if (guestCartItems == null || guestCartItems.Count == 0)
+                throw new InvalidOperationException("Your cart is empty.");
+
+            if (guestCartItems.Any(x =>
+                x.ProductVariantId <= 0 || x.Quantity <= 0))
             {
-                if (guestCartItems.Count == 0)
-                    throw new InvalidOperationException(
-                        "Your cart is empty.");
-
-                if (guestCartItems.Any(x =>
-                    x.ProductVariantId <= 0 || x.Quantity <= 0))
-                {
-                    throw new InvalidOperationException(
-                        "Invalid cart items.");
-                }
-
-                var groupedItems = guestCartItems
-                    .GroupBy(x => x.ProductVariantId)
-                    .Select(x => new
-                    {
-                        ProductVariantId = x.Key,
-                        Quantity = x.Sum(i => i.Quantity)
-                    })
-                    .ToList();
-
-                var variantIds = groupedItems
-                    .Select(x => x.ProductVariantId)
-                    .ToList();
-
-                IQueryable<ProductVariant> query =
-                    _context.ProductVariants
-                        .Include(x => x.Product)
-                            .ThenInclude(x => x.Images);
-
-                if (!tracking)
-                    query = query.AsNoTracking();
-
-                var variants = await query
-                    .Where(x => variantIds.Contains(x.Id))
-                    .ToListAsync(cancellationToken);
-
-                if (variants.Count != groupedItems.Count)
-                    throw new InvalidOperationException(
-                        "One or more products were not found.");
-
-                return groupedItems.Select(item =>
-                {
-                    var variant = variants.First(
-                        x => x.Id == item.ProductVariantId);
-
-                    return (variant, item.Quantity);
-                }).ToList();
+                throw new InvalidOperationException("Invalid cart items.");
             }
 
-            // LOGGED-IN CART: Items come from database.
-            if (!userId.HasValue)
-                throw new InvalidOperationException(
-                    "Cart items are required for guest checkout.");
+            var groupedItems = guestCartItems
+                .GroupBy(x => x.ProductVariantId)
+                .Select(x => new
+                {
+                    ProductVariantId = x.Key,
+                    Quantity = x.Sum(i => i.Quantity)
+                })
+                .ToList();
 
-            IQueryable<Cart> cartQuery = _context.Carts
-                .Include(x => x.Items)
-                    .ThenInclude(x => x.ProductVariant)
-                        .ThenInclude(x => x.Product)
-                            .ThenInclude(x => x.Images);
+            var variantIds = groupedItems
+                .Select(x => x.ProductVariantId)
+                .ToList();
+
+            IQueryable<ProductVariant> query =
+                _context.ProductVariants
+                    .Include(x => x.Product)
+                        .ThenInclude(x => x.Images);
 
             if (!tracking)
-                cartQuery = cartQuery.AsNoTracking();
+                query = query.AsNoTracking();
 
-            var cart = await cartQuery.FirstOrDefaultAsync(
-                x => x.UserId == userId.Value,
-                cancellationToken);
+            var variants = await query
+                .Where(x => variantIds.Contains(x.Id))
+                .ToListAsync(cancellationToken);
 
-            if (cart == null || cart.Items.Count == 0)
+            if (variants.Count != groupedItems.Count)
                 throw new InvalidOperationException(
-                    "Your cart is empty.");
+                    "One or more products were not found.");
 
-            return cart.Items
-                .Select(x => (x.ProductVariant, x.Quantity))
-                .ToList();
+            return groupedItems.Select(item =>
+            {
+                var variant = variants.First(
+                    x => x.Id == item.ProductVariantId);
+
+                return (variant, item.Quantity);
+            }).ToList();
         }
+
 
         throw new InvalidOperationException(
             "Invalid checkout mode. Use Cart or BuyNow.");

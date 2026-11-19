@@ -159,6 +159,8 @@ const Checkout = () => {
     useState<SavedSelection>(null);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
 
+  
+
   /* ---------- Customer data ---------- */
 
   const applyCustomer = (
@@ -316,17 +318,16 @@ const Checkout = () => {
           }
         }
 
-        const result = await checkoutService.getPreview({
-          mode,
-          ...(mode === "BuyNow" && { productVariantId, quantity }),
-          ...(isGuest &&
-            mode === "Cart" && {
+     const result = await checkoutService.getPreview({
+            mode,
+            ...(mode === "BuyNow" && { productVariantId, quantity }),
+            ...(mode === "Cart" && {
               guestCartItems: cartItems.map((item) => ({
-                productVariantId: item.id,
+                productVariantId: item.productVariantId,
                 quantity: item.quantity,
               })),
             }),
-        });
+          });
 
         if (isMounted) setPreview(result);
       } catch (err) {
@@ -616,12 +617,12 @@ const Checkout = () => {
         : null,
 
       guestCartItems:
-        isGuest && checkoutMode === "Cart"
-          ? cartItems.map((item) => ({
-              productVariantId: item.id,
-              quantity: item.quantity,
-            }))
-          : undefined,
+          checkoutMode === "Cart"
+            ? cartItems.map((item) => ({
+                productVariantId: item.productVariantId,
+                quantity: item.quantity,
+              }))
+            : undefined,
 
       shippingAddress: shippingRequest,
       billingAddress: billingRequest,

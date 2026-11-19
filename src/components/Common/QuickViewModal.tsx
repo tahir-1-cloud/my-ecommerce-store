@@ -183,6 +183,7 @@ const QuickViewModal = () => {
     handleAddToCart({
       id: product.id,
       title: product.name,
+      productVariantId: selectedVariant.id, 
       price: hasDiscount ? compareAtPrice : price,
       discountedPrice: price,
       quantity: quantity,
